@@ -226,14 +226,59 @@ function pct(r) {
   return r.total === 0 ? 0 : Math.round((r.done / r.total) * 100);
 }
 
+function computeStreak(logs) {
+  let streak = 0;
+  const cursor = new Date();
+  while (true) {
+    const dk = todayKey(cursor);
+    const log = logs[dk];
+    if (!log) break;
+    const dTot = dietTotals(log), wTot = workoutTotals(log), sTot = supplementTotals(log);
+    const done = dTot.done + wTot.done + sTot.done;
+    if (done <= 0) break;
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+const RING_COLORS = { Diet: "#ff4d3d", Workout: "#2dd4bf", Supps: "#ffb020", Overall: "#34d17c" };
+
+function buildRing(label, r) {
+  const size = 64, stroke = 8, radius = (size - stroke) / 2;
+  const c = 2 * Math.PI * radius;
+  const p = pct(r);
+  const offset = c * (1 - p / 100);
+  const color = RING_COLORS[label] || "#ff4d3d";
+  return `
+    <div class="ring-item">
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 ${size} ${size}">
+          <circle class="ring-track" cx="${size / 2}" cy="${size / 2}" r="${radius}" />
+          <circle class="ring-fill" cx="${size / 2}" cy="${size / 2}" r="${radius}"
+            stroke="${color}" stroke-dasharray="${c}" stroke-dashoffset="${offset}" />
+        </svg>
+        <div class="ring-pct">${p}%</div>
+      </div>
+      <div class="ring-label">${label}</div>
+    </div>`;
+}
+
 /* ---------------------------------------------------------------- render */
+const TAB_TITLES = { today: "Today", diet: "Diet", workout: "Workout", supplements: "Supplements", history: "History" };
+
 function renderAll() {
   const dateKey = todayKey();
   const log = getOrCreateDayLog(dateKey);
+  const logs = loadAllLogs();
+
+  const activeTab = document.querySelector(".nav-btn.active")?.dataset.tab || "today";
+  $("pageTitle").textContent = TAB_TITLES[activeTab];
 
   $("todayDisplay").textContent = new Date().toLocaleDateString(undefined, {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    weekday: "long", month: "long", day: "numeric",
   });
+  $("streakPill").textContent = `🔥 ${computeStreak(logs)}`;
   $("disclaimerText").textContent = PLAN.coach.disclaimer;
   $("coachLine").textContent = `Coach ${PLAN.coach.name} — ${PLAN.coach.title} — ${PLAN.coach.email}`;
 
@@ -245,16 +290,18 @@ function renderAll() {
 }
 
 function renderToday(dateKey, log) {
-  const select = $("splitDaySelect");
-  select.innerHTML = PLAN.split
-    .map((s) => `<option value="${s.day}">Day ${s.day} — ${s.label}${s.type === "rest" ? " (Rest)" : ""}</option>`)
-    .join("");
-  select.value = log.splitDay;
+  $("daySelector").innerHTML = PLAN.split.map((s) => `
+    <button class="day-chip ${s.type} ${s.day === log.splitDay ? "selected" : ""}" data-day="${s.day}">
+      <span class="dn">Day ${s.day}</span>
+      <span class="dl">${s.label}</span>
+      <span class="dt">${s.type === "training" ? "Train" : "Rest"}</span>
+    </button>
+  `).join("");
 
   const entry = splitEntryFor(log.splitDay);
   const badge = $("todayTypeBadge");
-  badge.textContent = entry.type === "training" ? `Training — ${entry.cardio}` : `Rest Day — ${entry.cardio}`;
-  badge.className = "today-type" + (entry.type === "rest" ? " rest" : "");
+  badge.textContent = entry.type === "training" ? `Training · ${entry.cardio}` : `Rest · ${entry.cardio}`;
+  badge.className = "day-strip-current" + (entry.type === "rest" ? " rest" : "");
 
   const dTot = dietTotals(log), wTot = workoutTotals(log), sTot = supplementTotals(log);
   const overallDone = dTot.done + wTot.done + sTot.done;
@@ -263,16 +310,11 @@ function renderToday(dateKey, log) {
   const items = [
     ["Diet", dTot],
     ["Workout", wTot],
-    ["Supplements", sTot],
+    ["Supps", sTot],
     ["Overall", { done: overallDone, total: overallTotal }],
   ];
 
-  $("progressOverview").innerHTML = items.map(([label, r]) => `
-    <div class="progress-item">
-      <div class="progress-label"><span>${label}</span><span>${r.done}/${r.total} · ${pct(r)}%</span></div>
-      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct(r)}%"></div></div>
-    </div>
-  `).join("");
+  $("ringsRow").innerHTML = items.map(([label, r]) => buildRing(label, r)).join("");
 
   const snapshotSections = [
     ["Morning Drink", sumBool(log.dietChecks.morningDrink)],
@@ -449,23 +491,28 @@ function renderSupplements(dateKey, log) {
 function renderHistory() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort().reverse();
-  const tbody = document.querySelector("#historyTable tbody");
   $("historyEmptyHint").style.display = dateKeys.length ? "none" : "block";
 
-  tbody.innerHTML = dateKeys.map((dk) => {
+  $("historyList").innerHTML = dateKeys.map((dk) => {
     const log = logs[dk];
     const entry = splitEntryFor(log.splitDay);
     const dTot = dietTotals(log), wTot = workoutTotals(log), sTot = supplementTotals(log);
     const overall = pct({ done: dTot.done + wTot.done + sTot.done, total: dTot.total + wTot.total + sTot.total });
-    return `<tr>
-      <td>${dk}</td>
-      <td>Day ${log.splitDay} — ${entry.label}</td>
-      <td>${pct(dTot)}%</td>
-      <td>${pct(wTot)}%</td>
-      <td>${pct(sTot)}%</td>
-      <td><strong>${overall}%</strong></td>
-      <td><button class="link-btn" data-delete-date="${dk}">Delete</button></td>
-    </tr>`;
+    return `<div class="history-card">
+      <div class="history-card-top">
+        <div>
+          <div class="history-date">${dk}</div>
+          <div class="history-day">Day ${log.splitDay} — ${entry.label}</div>
+        </div>
+        <button class="link-btn" data-delete-date="${dk}" aria-label="Delete">✕</button>
+      </div>
+      <div class="history-stats">
+        <span class="history-stat">Diet ${pct(dTot)}%</span>
+        <span class="history-stat">Workout ${pct(wTot)}%</span>
+        <span class="history-stat">Supps ${pct(sTot)}%</span>
+        <span class="history-stat overall">Overall ${overall}%</span>
+      </div>
+    </div>`;
   }).join("");
 }
 
@@ -548,19 +595,22 @@ function importJson(file) {
 document.addEventListener("DOMContentLoaded", () => {
   renderAll();
 
-  // Tab navigation
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      $(`panel-${btn.dataset.tab}`).classList.add("active");
-    });
+  // Bottom tab navigation
+  $("bottomNav").addEventListener("click", (e) => {
+    const btn = e.target.closest(".nav-btn");
+    if (!btn) return;
+    document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    $(`panel-${btn.dataset.tab}`).classList.add("active");
+    $("pageTitle").textContent = TAB_TITLES[btn.dataset.tab];
+    window.scrollTo(0, 0);
   });
 
-  // Split day selector
-  $("splitDaySelect").addEventListener("change", (e) => {
-    changeSplitDay(todayKey(), e.target.value);
+  // Day strip selector
+  $("daySelector").addEventListener("click", (e) => {
+    const chip = e.target.closest(".day-chip");
+    if (chip) changeSplitDay(todayKey(), chip.dataset.day);
   });
 
   // Notes
@@ -619,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.target.value = "";
   });
 
-  document.querySelector("#historyTable tbody").addEventListener("click", (e) => {
+  $("historyList").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-delete-date]");
     if (!btn) return;
     const dk = btn.dataset.deleteDate;
