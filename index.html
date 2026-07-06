@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Viper Tracker — Diet · Workout · Supplements</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#0e1015" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Viper Tracker" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <div class="logo">V</div>
+    <div class="header-titles">
+      <h1>Viper Tracker</h1>
+      <span class="subtitle">Personal transformation plan &middot; Coach Tasdid Hasan</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="date-display" id="todayDisplay"></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabNav">
+  <button class="tab-btn active" data-tab="today">Today</button>
+  <button class="tab-btn" data-tab="diet">Diet</button>
+  <button class="tab-btn" data-tab="workout">Workout</button>
+  <button class="tab-btn" data-tab="supplements">Supplements</button>
+  <button class="tab-btn" data-tab="history">History</button>
+</nav>
+
+<main id="app">
+
+  <!-- TODAY -->
+  <section class="tab-panel active" id="panel-today">
+    <div class="card summary-card">
+      <div class="summary-row">
+        <div>
+          <label for="splitDaySelect">Which day of your split is today?</label>
+          <select id="splitDaySelect"></select>
+        </div>
+        <div class="today-type" id="todayTypeBadge"></div>
+      </div>
+      <div class="progress-overview" id="progressOverview"></div>
+    </div>
+
+    <div class="card">
+      <h2>Today's Checklist Snapshot</h2>
+      <div id="todaySnapshot" class="snapshot-grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Notes for Today</h2>
+      <textarea id="dayNotes" placeholder="Energy levels, hunger, soreness, anything worth logging..."></textarea>
+    </div>
+  </section>
+
+  <!-- DIET -->
+  <section class="tab-panel" id="panel-diet">
+    <div id="dietContent"></div>
+  </section>
+
+  <!-- WORKOUT -->
+  <section class="tab-panel" id="panel-workout">
+    <div id="workoutContent"></div>
+  </section>
+
+  <!-- SUPPLEMENTS -->
+  <section class="tab-panel" id="panel-supplements">
+    <div id="supplementsContent"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="tab-panel" id="panel-history">
+    <div class="card">
+      <div class="history-header">
+        <h2>Daily Log History</h2>
+        <div class="history-actions">
+          <button class="btn btn-primary" id="exportCsvBtn">Export Sheet (CSV)</button>
+          <button class="btn btn-secondary" id="exportJsonBtn">Backup (JSON)</button>
+          <label class="btn btn-secondary file-btn">
+            Restore Backup
+            <input type="file" id="importJsonInput" accept="application/json" hidden />
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Split Day</th>
+              <th>Diet %</th>
+              <th>Workout %</th>
+              <th>Supplements %</th>
+              <th>Overall %</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="empty-hint" id="historyEmptyHint">No days logged yet — check items off in the Diet, Workout, and Supplements tabs and they'll show up here.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p><strong>Disclaimer:</strong> <span id="disclaimerText"></span></p>
+  <p class="coach-line" id="coachLine"></p>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
