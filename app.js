@@ -451,6 +451,32 @@ function renderDiet(dateKey, log) {
   $("dietContent").innerHTML = html;
 }
 
+const expandedVideos = new Set();
+
+function youtubeEmbedId(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+
+function videoBlockHtml(ex, key) {
+  const ytId = ex.video ? youtubeEmbedId(ex.video) : null;
+
+  if (ytId) {
+    if (expandedVideos.has(key)) {
+      return `
+        <div class="video-frame-wrap">
+          <iframe src="https://www.youtube.com/embed/${ytId}?rel=0" title="${ex.exercise} form video"
+            frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <button class="video-btn video-btn-collapse" data-video-key="${key}" data-video-action="collapse">✕ Hide video</button>`;
+    }
+    return `<button class="video-btn" data-video-key="${key}" data-video-action="expand">▶ Watch form video</button>`;
+  }
+
+  const query = encodeURIComponent(`${ex.exercise} proper form exercise`);
+  return `<a class="video-btn video-btn-secondary" href="https://www.youtube.com/results?search_query=${query}" target="_blank" rel="noopener">🔍 Find form videos ↗</a>`;
+}
+
 function renderWorkout(dateKey, log) {
   const entry = splitEntryFor(log.splitDay);
   let html = `<div class="card">
@@ -472,6 +498,7 @@ function renderWorkout(dateKey, log) {
     workout.exercises.forEach((ex, i) => {
       const checked = log.workoutChecks.exercises[i];
       const logEntry = log.workoutChecks.logs[i] || { weight: "", reps: "" };
+      const videoKey = `${entry.workout}-${i}`;
       html += `<div class="exercise-row">
         <div class="exercise-head">
           <div>
@@ -484,7 +511,7 @@ function renderWorkout(dateKey, log) {
         </div>
         <div class="exercise-meta"><span>${ex.sets} sets</span><span>${ex.reps} reps</span></div>
         ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ""}
-        ${ex.video ? `<div class="exercise-notes"><a href="${ex.video}" target="_blank" rel="noopener">Watch demo ↗</a></div>` : ""}
+        <div class="exercise-video">${videoBlockHtml(ex, videoKey)}</div>
         <div class="exercise-log">
           <div><label>Weight used</label><input type="text" data-kind="workout-log-weight" data-index="${i}" value="${logEntry.weight}" placeholder="kg" /></div>
           <div><label>Reps achieved</label><input type="text" data-kind="workout-log-reps" data-index="${i}" value="${logEntry.reps}" placeholder="e.g. 10,9,8" /></div>
@@ -660,6 +687,18 @@ document.addEventListener("DOMContentLoaded", () => {
   $("dietContent").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-diet-type]");
     if (btn) changeDietType(todayKey(), btn.dataset.dietType);
+  });
+
+  // Inline form-video expand/collapse (event delegation on workout content)
+  $("workoutContent").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-video-action]");
+    if (!btn) return;
+    const key = btn.dataset.videoKey;
+    if (btn.dataset.videoAction === "expand") expandedVideos.add(key);
+    else expandedVideos.delete(key);
+    const scrollY = window.scrollY;
+    renderAll();
+    window.scrollTo(0, scrollY);
   });
 
   // Checkbox delegation for diet / workout / supplements
