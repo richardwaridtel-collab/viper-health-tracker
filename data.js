@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Viper Health Tracker — Plan Data
+   Beyond Fitness Tracker — Plan Data
    Source: Train With The Viper coaching plan (Coach Tasdid Hasan)
    ========================================================================== */
 

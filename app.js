@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Viper Health Tracker — App Logic
+   Beyond Fitness Tracker — App Logic
    ========================================================================== */
 
 const STORAGE_KEY = "viperTracker.logs.v1";
@@ -602,13 +602,13 @@ function exportCsv() {
   });
 
   const csv = rows.map((r) => r.map(csvEscape).join(",")).join("\r\n");
-  downloadBlob(csv, `viper-tracker-log-${todayKey()}.csv`, "text/csv;charset=utf-8;");
+  downloadBlob(csv, `beyond-fitness-log-${todayKey()}.csv`, "text/csv;charset=utf-8;");
   showToast("Sheet exported");
 }
 
 function exportJson() {
   const data = { logs: loadAllLogs(), settings: loadSettings() };
-  downloadBlob(JSON.stringify(data, null, 2), `viper-tracker-backup-${todayKey()}.json`, "application/json");
+  downloadBlob(JSON.stringify(data, null, 2), `beyond-fitness-backup-${todayKey()}.json`, "application/json");
   showToast("Backup downloaded");
 }
 
@@ -623,7 +623,7 @@ function importJson(file) {
       showToast("Backup restored");
       renderAll();
     } catch (e) {
-      alert("Could not restore this file — it doesn't look like a valid Viper Tracker backup.");
+      alert("Could not restore this file — it doesn't look like a valid Beyond Fitness backup.");
     }
   };
   reader.readAsText(file);
