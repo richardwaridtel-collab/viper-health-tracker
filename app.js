@@ -4,6 +4,7 @@
 
 const STORAGE_KEY = "viperTracker.logs.v1";
 const SETTINGS_KEY = "viperTracker.settings.v1";
+const THEME_KEY = "viperTracker.theme.v1";
 
 let toastTimer = null;
 
@@ -12,6 +13,43 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
+
+/* -------------------------------------------------------------- theme */
+function systemTheme() {
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "light" ? "#f3f4f7" : "#0b0d12");
+  const sun = document.getElementById("themeIconSun");
+  const moon = document.getElementById("themeIconMoon");
+  if (sun && moon) {
+    sun.style.display = theme === "light" ? "none" : "block";
+    moon.style.display = theme === "light" ? "block" : "none";
+  }
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  applyTheme(stored || systemTheme());
+  if (!stored && window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+      if (!localStorage.getItem(THEME_KEY)) applyTheme(systemTheme());
+    });
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || systemTheme();
+  const next = current === "light" ? "dark" : "light";
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+initTheme();
+document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
 /* ------------------------------------------------------------ small utils */
 function $(id) { return document.getElementById(id); }
