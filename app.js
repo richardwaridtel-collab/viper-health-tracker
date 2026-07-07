@@ -366,7 +366,7 @@ function renderToday(dateKey, log) {
     ["Supplements", supplementTotals(log)],
   ];
   if (entry.type === "training") {
-    snapshotSections.splice(5, 0,
+    snapshotSections.splice(4, 0,
       ["Pre-Workout", sumBool(log.dietChecks.preWorkout)],
       ["Intra-Workout", sumBool(log.dietChecks.intraWorkout)],
       ["Post-Workout", sumBool(log.dietChecks.postWorkout)],
@@ -410,7 +410,7 @@ function renderDiet(dateKey, log) {
     ${PLAN.diet.morningDrink.items.map((it, i) => checkItemHtml(it, log.dietChecks.morningDrink[i], "diet", "morningDrink", i)).join("")}
   </div>`;
 
-  [1, 2, 3, 4].forEach((n) => {
+  const renderMeal = (n) => {
     const meal = PLAN.diet.meals[n];
     const items = meal[type];
     html += `<div class="card meal-block">
@@ -419,7 +419,9 @@ function renderDiet(dateKey, log) {
       ${items.map((it, i) => checkItemHtml(it, log.dietChecks["meal" + n][i], "diet", "meal" + n, i)).join("")}
       ${meal.note ? `<p class="mini-note">${meal.note}</p>` : ""}
     </div>`;
-  });
+  };
+
+  [1, 2, 3].forEach(renderMeal);
 
   if (training) {
     const tw = PLAN.diet.training;
@@ -434,6 +436,8 @@ function renderDiet(dateKey, log) {
   } else {
     html += `<div class="card"><h2>Pre / Intra / Post-Workout Nutrition</h2><p class="mini-note">Not applicable — today is a rest day.</p></div>`;
   }
+
+  renderMeal(4);
 
   html += `<div class="card">
     <h2>${PLAN.diet.beforeBed.title}</h2>
