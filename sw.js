@@ -1,4 +1,4 @@
-const CACHE_NAME = "viper-tracker-v6";
+const CACHE_NAME = "viper-tracker-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,20 +25,20 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Network-first: always serve the freshest copy when online, so updates show
+// up on the very next open instead of needing a repeat visit. Falls back to
+// the cache only when there's no connection at all.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

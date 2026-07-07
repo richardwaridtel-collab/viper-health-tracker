@@ -51,6 +51,21 @@ function toggleTheme() {
 initTheme();
 document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
+/* ------------------------------------------------------------- splash */
+(function hideSplashOnLoad() {
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const minDisplay = reduceMotion ? 80 : 750;
+  const dismiss = () => {
+    const splash = document.getElementById("splashScreen");
+    if (!splash) return;
+    splash.classList.add("hide");
+    setTimeout(() => splash.remove(), 420);
+  };
+  window.addEventListener("load", () => setTimeout(dismiss, minDisplay));
+  // Fallback in case the load event is delayed by a slow network
+  setTimeout(dismiss, 2500);
+})();
+
 /* ------------------------------------------------------------ small utils */
 function $(id) { return document.getElementById(id); }
 

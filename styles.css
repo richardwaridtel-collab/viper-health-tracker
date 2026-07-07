@@ -65,6 +65,37 @@ body {
 
 h1, h2, h3, p { margin: 0; }
 
+/* --------------------------------------------------------------- SPLASH */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.4s ease;
+}
+
+.splash-logo {
+  width: 112px;
+  height: 112px;
+  border-radius: 26px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  animation: splash-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes splash-pop {
+  0% { transform: scale(0.35) rotate(-10deg); opacity: 0; }
+  65% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.splash-screen.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ---------------------------------------------------------------- HEADER */
 .app-header {
   display: flex;
@@ -389,6 +420,13 @@ textarea { min-height: 90px; resize: vertical; }
 .check-item input[type="checkbox"]:checked {
   background: linear-gradient(135deg, var(--good), #229c5b);
   border-color: var(--good);
+  animation: check-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
 }
 
 .check-item input[type="checkbox"]:checked::after {
@@ -478,6 +516,7 @@ textarea { min-height: 90px; resize: vertical; }
 .exercise-head input[type="checkbox"]:checked {
   background: linear-gradient(135deg, var(--good), #229c5b);
   border-color: var(--good);
+  animation: check-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .exercise-head input[type="checkbox"]:checked::after {
   content: "";
@@ -558,7 +597,13 @@ textarea { min-height: 90px; resize: vertical; }
 
 .pr-badge { margin-top: 6px; }
 .pr-hint { font-size: 11px; color: var(--text-dim); }
-.pr-flag { color: var(--warn); font-weight: 700; }
+.pr-flag { color: var(--warn); font-weight: 700; display: inline-block; animation: pr-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes pr-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
 
 .plate-calc { margin-top: 10px; }
 .plate-toggle-btn {
@@ -841,4 +886,21 @@ textarea { min-height: 90px; resize: vertical; }
   .rings-row { grid-template-columns: repeat(2, 1fr); row-gap: 16px; }
   .supp-dosage { max-width: 100%; text-align: left; }
   .supp-top { flex-direction: column; }
+}
+
+/* ------------------------------------------------------- MICRO-INTERACTIONS */
+button {
+  transition: transform 0.12s ease;
+}
+button:active {
+  transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
