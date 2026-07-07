@@ -50,6 +50,15 @@
     </div>
 
     <div class="card">
+      <h2>Body Weight</h2>
+      <div class="bodyweight-row">
+        <input type="number" id="bodyWeightInput" step="0.1" inputmode="decimal" placeholder="e.g. 78.5" />
+        <span class="bodyweight-unit">kg</span>
+        <span class="bodyweight-trend" id="bodyWeightTrend"></span>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Today's Checklist Snapshot</h2>
       <div id="todaySnapshot" class="snapshot-grid"></div>
     </div>
@@ -75,8 +84,18 @@
     <div id="supplementsContent"></div>
   </section>
 
-  <!-- HISTORY -->
+  <!-- HISTORY / PROGRESS -->
   <section class="tab-panel" id="panel-history">
+    <div class="card">
+      <h2>Consistency</h2>
+      <div id="heatmapWrap" class="heatmap-wrap"></div>
+    </div>
+
+    <div class="card">
+      <h2>Body Weight Trend</h2>
+      <div id="weightChartWrap" class="weight-chart-wrap"></div>
+    </div>
+
     <div class="card">
       <div class="history-header">
         <h2>Daily Log History</h2>
@@ -120,7 +139,7 @@
   </button>
   <button class="nav-btn" data-tab="history">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19v-3"/></svg>
-    <span>History</span>
+    <span>Progress</span>
   </button>
 </nav>
 

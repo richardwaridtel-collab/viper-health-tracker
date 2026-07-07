@@ -281,6 +281,19 @@ textarea { min-height: 90px; resize: vertical; }
 
 .ring-label { font-size: 11px; color: var(--text-dim); font-weight: 700; }
 
+/* ------------------------------------------------------------ BODY WEIGHT */
+.bodyweight-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bodyweight-row input {
+  width: 120px;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+.bodyweight-unit { font-size: 13px; color: var(--text-dim); font-weight: 700; }
+.bodyweight-trend { font-size: 12.5px; color: var(--text-dim); margin-left: auto; }
+.bodyweight-trend.up { color: var(--warn); }
+.bodyweight-trend.down { color: var(--good); }
+
 /* --------------------------------------------------------------- SNAPSHOT */
 .snapshot-grid {
   display: grid;
@@ -543,6 +556,58 @@ textarea { min-height: 90px; resize: vertical; }
 .exercise-log input { font-size: 13px; padding: 8px 10px; }
 .exercise-log label { font-size: 10.5px; color: var(--text-dim); display: block; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
 
+.pr-badge { margin-top: 6px; }
+.pr-hint { font-size: 11px; color: var(--text-dim); }
+.pr-flag { color: var(--warn); font-weight: 700; }
+
+.plate-calc { margin-top: 10px; }
+.plate-toggle-btn {
+  background: transparent;
+  border: 1px dashed var(--card-border);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.plate-display {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+.plate-muted { color: var(--text-dim); }
+
+.timer-section { margin-top: 10px; }
+.timer-block { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.timer-label { font-size: 11.5px; color: var(--text-dim); font-weight: 700; }
+.timer-btn {
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.timer-block.active {
+  background: var(--accent-dim);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.timer-display {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  min-width: 52px;
+}
+.timer-btn-cancel { color: var(--text-dim); background: var(--bg-alt); }
+
 /* -------------------------------------------------------------- SUPPLEMENTS */
 .supp-row {
   display: flex;
@@ -594,6 +659,51 @@ textarea { min-height: 90px; resize: vertical; }
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ------------------------------------------------------------------ HEATMAP */
+.heatmap-wrap { overflow-x: auto; }
+.heatmap-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+  width: max-content;
+}
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--bg-alt);
+  border: 1px solid var(--card-border);
+}
+.heatmap-cell.level-1 { background: var(--bg-alt); }
+.heatmap-cell.level-2 { background: #ff4d3d40; border-color: transparent; }
+.heatmap-cell.level-3 { background: #ff4d3d80; border-color: transparent; }
+.heatmap-cell.level-4 { background: #ff4d3dbb; border-color: transparent; }
+.heatmap-cell.level-5 { background: var(--accent); border-color: transparent; }
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.heatmap-legend .heatmap-cell { display: inline-block; }
+
+/* -------------------------------------------------------------- WEIGHT CHART */
+.weight-chart-svg {
+  width: 100%;
+  height: 100px;
+  display: block;
+}
+.weight-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
 }
 
 /* ------------------------------------------------------------------ HISTORY */

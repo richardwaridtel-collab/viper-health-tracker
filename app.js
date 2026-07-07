@@ -152,6 +152,7 @@ function getOrCreateDayLog(dateKey) {
       workoutChecks: defaultWorkoutChecks(entry),
       supplementChecks: defaultSupplementChecks(),
       notes: "",
+      bodyWeight: "",
     };
     settings.nextSplitDay = (splitDay % 7) + 1;
     saveSettings(settings);
@@ -264,6 +265,16 @@ function pct(r) {
   return r.total === 0 ? 0 : Math.round((r.done / r.total) * 100);
 }
 
+function findPreviousBodyWeight(excludeDateKey) {
+  const logs = loadAllLogs();
+  const keys = Object.keys(logs)
+    .filter((dk) => dk < excludeDateKey && parseFloat(logs[dk].bodyWeight) > 0)
+    .sort();
+  if (!keys.length) return null;
+  const dk = keys[keys.length - 1];
+  return { date: dk, weight: parseFloat(logs[dk].bodyWeight) };
+}
+
 function computeStreak(logs) {
   let streak = 0;
   const cursor = new Date();
@@ -303,7 +314,7 @@ function buildRing(label, r) {
 }
 
 /* ---------------------------------------------------------------- render */
-const TAB_TITLES = { today: "Today", diet: "Diet", workout: "Workout", supplements: "Supplements", history: "History" };
+const TAB_TITLES = { today: "Today", diet: "Diet", workout: "Workout", supplements: "Supplements", history: "Progress" };
 
 function renderAll() {
   const dateKey = todayKey();
@@ -353,6 +364,23 @@ function renderToday(dateKey, log) {
   ];
 
   $("ringsRow").innerHTML = items.map(([label, r]) => buildRing(label, r)).join("");
+
+  $("bodyWeightInput").value = log.bodyWeight || "";
+  const prevWeight = findPreviousBodyWeight(dateKey);
+  const trendEl = $("bodyWeightTrend");
+  const currentWeight = parseFloat(log.bodyWeight);
+  if (prevWeight && !isNaN(currentWeight) && currentWeight > 0) {
+    const diff = currentWeight - prevWeight.weight;
+    const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "▬";
+    trendEl.textContent = `${arrow} ${Math.abs(diff).toFixed(1)}kg since ${prevWeight.date}`;
+    trendEl.className = "bodyweight-trend" + (diff > 0 ? " up" : diff < 0 ? " down" : "");
+  } else if (prevWeight) {
+    trendEl.textContent = `Last logged: ${prevWeight.weight}kg (${prevWeight.date})`;
+    trendEl.className = "bodyweight-trend";
+  } else {
+    trendEl.textContent = "";
+    trendEl.className = "bodyweight-trend";
+  }
 
   const snapshotSections = [
     ["Morning Drink", sumBool(log.dietChecks.morningDrink)],
@@ -481,6 +509,157 @@ function videoBlockHtml(ex, key) {
   return `<a class="video-btn video-btn-secondary" href="https://www.youtube.com/results?search_query=${query}" target="_blank" rel="noopener">🔍 Find form videos ↗</a>`;
 }
 
+function escapeAttr(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+function parseMaxNumber(str) {
+  const nums = (String(str).match(/[\d.]+/g) || []).map(Number);
+  return nums.length ? Math.max(...nums) : 0;
+}
+
+/* ------------------------------------------------------------- PR badges */
+function bestWeightFor(exerciseName, excludeDateKey) {
+  const logs = loadAllLogs();
+  let best = 0;
+  Object.keys(logs).forEach((dk) => {
+    if (dk === excludeDateKey) return;
+    const dayLog = logs[dk];
+    const entry = splitEntryFor(dayLog.splitDay);
+    if (!entry.workout) return;
+    PLAN.workouts[entry.workout].exercises.forEach((ex, i) => {
+      if (ex.exercise !== exerciseName) return;
+      const w = (dayLog.workoutChecks.logs[i] || {}).weight || "";
+      best = Math.max(best, parseMaxNumber(w));
+    });
+  });
+  return best;
+}
+
+function prBadgeInnerHtml(exerciseName, currentWeightStr, dateKey) {
+  const best = bestWeightFor(exerciseName, dateKey);
+  const currentMax = parseMaxNumber(currentWeightStr);
+  if (best <= 0) return `<span class="pr-hint">No history yet — first logged weight will set your baseline</span>`;
+  if (currentMax > best) return `<span class="pr-hint pr-flag">🏆 New PR! Previous best: ${best}kg</span>`;
+  return `<span class="pr-hint">Best so far: ${best}kg</span>`;
+}
+
+/* --------------------------------------------------------- plate calculator */
+const BAR_WEIGHT = 20;
+const PLATE_SIZES = [20, 15, 10, 5, 2.5, 1.25];
+const expandedPlateCalc = new Set();
+
+function plateBreakdown(totalWeight) {
+  let perSide = (totalWeight - BAR_WEIGHT) / 2;
+  if (perSide <= 0) return null;
+  const plates = [];
+  for (const p of PLATE_SIZES) {
+    while (perSide + 1e-6 >= p) {
+      plates.push(p);
+      perSide -= p;
+    }
+  }
+  return { plates, remainder: perSide };
+}
+
+function plateCalcInnerHtml(weightStr) {
+  const total = parseMaxNumber(weightStr);
+  if (!total) return `<span class="plate-hint">Enter a weight above first</span>`;
+  const result = plateBreakdown(total);
+  if (!result) return `<span class="plate-hint">Weight must exceed the ${BAR_WEIGHT}kg bar</span>`;
+  const grouped = {};
+  result.plates.forEach((p) => { grouped[p] = (grouped[p] || 0) + 1; });
+  const parts = Object.keys(grouped).sort((a, b) => b - a).map((p) => `${p}×${grouped[p]}`);
+  const remNote = result.remainder > 0.01 ? ` (+${result.remainder.toFixed(2)}kg not loadable)` : "";
+  return `<span class="plate-hint">Per side (kg): ${parts.join(" + ")}${remNote} <span class="plate-muted">· ${BAR_WEIGHT}kg bar</span></span>`;
+}
+
+function plateCalcBlockHtml(key, weightStr) {
+  if (!expandedPlateCalc.has(key)) {
+    return `<button class="plate-toggle-btn" data-plate-key="${key}" data-plate-action="expand">🧮 Plate calculator</button>`;
+  }
+  return `
+    <div class="plate-display" id="plate-display-${key}">${plateCalcInnerHtml(weightStr)}</div>
+    <button class="plate-toggle-btn" data-plate-key="${key}" data-plate-action="collapse">Hide plate calculator</button>`;
+}
+
+/* -------------------------------------------------------------- rest timer */
+let activeTimer = null;
+let timerTickHandle = null;
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.55);
+  } catch (e) { /* audio not available, ignore */ }
+}
+
+function onRestTimerDone() {
+  if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+  playBeep();
+  showToast("Rest complete — next set!");
+  renderAll();
+}
+
+function tickRestTimer() {
+  if (timerTickHandle) clearInterval(timerTickHandle);
+  timerTickHandle = setInterval(() => {
+    if (!activeTimer) { clearInterval(timerTickHandle); timerTickHandle = null; return; }
+    const remaining = Math.max(0, Math.round((activeTimer.endsAt - Date.now()) / 1000));
+    const el = document.getElementById(`timerDisplay-${activeTimer.key}`);
+    if (el) el.textContent = formatTime(remaining);
+    if (remaining <= 0) {
+      clearInterval(timerTickHandle);
+      timerTickHandle = null;
+      activeTimer = null;
+      onRestTimerDone();
+    }
+  }, 250);
+}
+
+function startRestTimer(key, seconds) {
+  activeTimer = { key, endsAt: Date.now() + seconds * 1000 };
+  tickRestTimer();
+}
+
+function stopRestTimer() {
+  activeTimer = null;
+  if (timerTickHandle) { clearInterval(timerTickHandle); timerTickHandle = null; }
+}
+
+function restTimerBlockHtml(key) {
+  if (activeTimer && activeTimer.key === key) {
+    const remaining = Math.max(0, Math.round((activeTimer.endsAt - Date.now()) / 1000));
+    return `
+      <div class="timer-block active">
+        <span class="timer-display" id="timerDisplay-${key}">${formatTime(remaining)}</span>
+        <button class="timer-btn timer-btn-cancel" data-timer-action="cancel" data-timer-key="${key}">Cancel</button>
+      </div>`;
+  }
+  return `
+    <div class="timer-block">
+      <span class="timer-label">⏱ Rest</span>
+      <button class="timer-btn" data-timer-action="start" data-timer-key="${key}" data-timer-secs="60">60s</button>
+      <button class="timer-btn" data-timer-action="start" data-timer-key="${key}" data-timer-secs="90">90s</button>
+      <button class="timer-btn" data-timer-action="start" data-timer-key="${key}" data-timer-secs="120">120s</button>
+    </div>`;
+}
+
 function renderWorkout(dateKey, log) {
   const entry = splitEntryFor(log.splitDay);
   let html = `<div class="card">
@@ -503,7 +682,7 @@ function renderWorkout(dateKey, log) {
       const checked = log.workoutChecks.exercises[i];
       const logEntry = log.workoutChecks.logs[i] || { weight: "", reps: "" };
       const videoKey = `${entry.workout}-${i}`;
-      html += `<div class="exercise-row">
+      html += `<div class="exercise-row" data-video-key="${videoKey}" data-exercise-name="${escapeAttr(ex.exercise)}">
         <div class="exercise-head">
           <div>
             <div class="exercise-muscle">${ex.muscle} · ${ex.order}</div>
@@ -517,9 +696,15 @@ function renderWorkout(dateKey, log) {
         ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ""}
         <div class="exercise-video">${videoBlockHtml(ex, videoKey)}</div>
         <div class="exercise-log">
-          <div><label>Weight used</label><input type="text" data-kind="workout-log-weight" data-index="${i}" value="${logEntry.weight}" placeholder="kg" /></div>
+          <div>
+            <label>Weight used</label>
+            <input type="text" data-kind="workout-log-weight" data-index="${i}" value="${logEntry.weight}" placeholder="kg" />
+            <div class="pr-badge" id="pr-badge-${videoKey}">${prBadgeInnerHtml(ex.exercise, logEntry.weight, dateKey)}</div>
+          </div>
           <div><label>Reps achieved</label><input type="text" data-kind="workout-log-reps" data-index="${i}" value="${logEntry.reps}" placeholder="e.g. 10,9,8" /></div>
         </div>
+        <div class="plate-calc">${plateCalcBlockHtml(videoKey, logEntry.weight)}</div>
+        <div class="timer-section">${restTimerBlockHtml(videoKey)}</div>
       </div>`;
     });
     html += `</div>`;
@@ -557,7 +742,86 @@ function renderSupplements(dateKey, log) {
   $("supplementsContent").innerHTML = html;
 }
 
+function renderHeatmap() {
+  const logs = loadAllLogs();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 83);
+  start.setDate(start.getDate() - start.getDay());
+
+  const cells = [];
+  const cursor = new Date(start);
+  while (cursor <= today) {
+    const dk = todayKey(cursor);
+    const log = logs[dk];
+    let p = null;
+    if (log) {
+      const dTot = dietTotals(log), wTot = workoutTotals(log), sTot = supplementTotals(log);
+      p = pct({ done: dTot.done + wTot.done + sTot.done, total: dTot.total + wTot.total + sTot.total });
+    }
+    cells.push({ date: dk, pct: p });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const levelFor = (p) => {
+    if (p === null) return 0;
+    if (p === 0) return 1;
+    if (p < 40) return 2;
+    if (p < 75) return 3;
+    if (p < 100) return 4;
+    return 5;
+  };
+
+  $("heatmapWrap").innerHTML = `
+    <div class="heatmap-grid">
+      ${cells.map((c) => `<div class="heatmap-cell level-${levelFor(c.pct)}" title="${c.date}${c.pct !== null ? `: ${c.pct}%` : ": no log"}"></div>`).join("")}
+    </div>
+    <div class="heatmap-legend">
+      <span>Less</span>
+      <span class="heatmap-cell level-1"></span><span class="heatmap-cell level-2"></span><span class="heatmap-cell level-3"></span><span class="heatmap-cell level-4"></span><span class="heatmap-cell level-5"></span>
+      <span>More</span>
+    </div>`;
+}
+
+function renderWeightChart() {
+  const logs = loadAllLogs();
+  const points = Object.keys(logs)
+    .filter((dk) => parseFloat(logs[dk].bodyWeight) > 0)
+    .sort()
+    .map((dk) => ({ date: dk, weight: parseFloat(logs[dk].bodyWeight) }));
+
+  if (points.length < 2) {
+    $("weightChartWrap").innerHTML = `<p class="mini-note">Log your body weight on the Today tab for a few days to see a trend line here.</p>`;
+    return;
+  }
+
+  const weights = points.map((p) => p.weight);
+  const min = Math.min(...weights), max = Math.max(...weights);
+  const range = max - min || 1;
+  const w = 100, h = 40, padY = 4;
+  const stepX = w / (points.length - 1);
+  const coords = points.map((p, i) => {
+    const x = i * stepX;
+    const y = padY + (h - 2 * padY) * (1 - (p.weight - min) / range);
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+  const path = "M" + coords.join(" L");
+
+  $("weightChartWrap").innerHTML = `
+    <svg class="weight-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+    </svg>
+    <div class="weight-chart-labels">
+      <span>${min.toFixed(1)}kg</span>
+      <span>${points[0].date} → ${points[points.length - 1].date}</span>
+      <span>${max.toFixed(1)}kg</span>
+    </div>`;
+}
+
 function renderHistory() {
+  renderHeatmap();
+  renderWeightChart();
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort().reverse();
   $("historyEmptyHint").style.display = dateKeys.length ? "none" : "block";
@@ -607,7 +871,7 @@ function downloadBlob(content, filename, type) {
 function exportCsv() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort();
-  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
+  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
   const rows = [header];
 
   dateKeys.forEach((dk) => {
@@ -622,6 +886,7 @@ function exportCsv() {
       entry.label,
       entry.type,
       log.dietChecks.dietType,
+      log.bodyWeight || "",
       pct(dTot),
       pct(wTot),
       pct(sTot),
@@ -687,19 +952,38 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDayLog(todayKey(), (log) => { log.notes = e.target.value; });
   });
 
+  // Body weight
+  $("bodyWeightInput").addEventListener("input", (e) => {
+    updateDayLog(todayKey(), (log) => { log.bodyWeight = e.target.value; });
+  });
+  $("bodyWeightInput").addEventListener("change", () => renderAll());
+
   // Diet type toggle (event delegation on diet content)
   $("dietContent").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-diet-type]");
     if (btn) changeDietType(todayKey(), btn.dataset.dietType);
   });
 
-  // Inline form-video expand/collapse (event delegation on workout content)
+  // Inline form-video expand/collapse, rest timer, and plate calculator (event delegation on workout content)
   $("workoutContent").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-video-action]");
-    if (!btn) return;
-    const key = btn.dataset.videoKey;
-    if (btn.dataset.videoAction === "expand") expandedVideos.add(key);
-    else expandedVideos.delete(key);
+    const videoBtn = e.target.closest("[data-video-action]");
+    const timerBtn = e.target.closest("[data-timer-action]");
+    const plateBtn = e.target.closest("[data-plate-action]");
+    if (!videoBtn && !timerBtn && !plateBtn) return;
+
+    if (videoBtn) {
+      const key = videoBtn.dataset.videoKey;
+      if (videoBtn.dataset.videoAction === "expand") expandedVideos.add(key);
+      else expandedVideos.delete(key);
+    } else if (timerBtn) {
+      const key = timerBtn.dataset.timerKey;
+      if (timerBtn.dataset.timerAction === "start") startRestTimer(key, Number(timerBtn.dataset.timerSecs));
+      else stopRestTimer();
+    } else if (plateBtn) {
+      const key = plateBtn.dataset.plateKey;
+      if (plateBtn.dataset.plateAction === "expand") expandedPlateCalc.add(key);
+      else expandedPlateCalc.delete(key);
+    }
     const scrollY = window.scrollY;
     renderAll();
     window.scrollTo(0, scrollY);
@@ -738,6 +1022,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const idx = Number(t.dataset.index);
         const field = t.dataset.kind === "workout-log-weight" ? "weight" : "reps";
         updateDayLog(todayKey(), (log) => { log.workoutChecks.logs[idx][field] = t.value; });
+
+        if (t.dataset.kind === "workout-log-weight") {
+          const row = t.closest(".exercise-row");
+          if (row) {
+            const key = row.dataset.videoKey;
+            const badge = document.getElementById(`pr-badge-${key}`);
+            if (badge) badge.innerHTML = prBadgeInnerHtml(row.dataset.exerciseName, t.value, todayKey());
+            const plateDisplay = document.getElementById(`plate-display-${key}`);
+            if (plateDisplay) plateDisplay.innerHTML = plateCalcInnerHtml(t.value);
+          }
+        }
       }
     });
   });
