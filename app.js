@@ -546,7 +546,6 @@ function renderToday(dateKey, log) {
 
   renderMeasureCharts();
   renderHeatmap();
-  renderWeightChart();
 
   $("dayNotes").value = log.notes || "";
 }
@@ -1065,24 +1064,7 @@ function renderHeatmap() {
     </div>`;
 }
 
-function renderWeightChart() {
-  const logs = loadAllLogs();
-  const points = Object.keys(logs)
-    .filter((dk) => parseFloat(logs[dk].bodyWeight) > 0)
-    .sort()
-    .map((dk) => ({ date: dk, value: parseFloat(logs[dk].bodyWeight) }));
-
-  if (points.length < 2) {
-    $("weightChartWrap").innerHTML = `<p class="mini-note">Log your body weight on the Today tab for a few days to see a trend line here.</p>`;
-    return;
-  }
-
-  $("weightChartWrap").innerHTML = buildLineChart(points, "kg", "weightChartWrap");
-}
-
 function renderHistory() {
-  renderHeatmap();
-  renderWeightChart();
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort().reverse();
   $("historyEmptyHint").style.display = dateKeys.length ? "none" : "block";
