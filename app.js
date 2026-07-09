@@ -22,7 +22,7 @@ function systemTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "light" ? "#f3f4f7" : "#0b0d12");
+  if (meta) meta.setAttribute("content", theme === "light" ? "#f3f3f4" : "#111214");
   const sun = document.getElementById("themeIconSun");
   const moon = document.getElementById("themeIconMoon");
   if (sun && moon) {
