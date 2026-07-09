@@ -31,12 +31,20 @@ function applyTheme(theme) {
   }
 }
 
+function readThemePref() {
+  try {
+    return localStorage.getItem(THEME_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
 function initTheme() {
-  const stored = localStorage.getItem(THEME_KEY);
+  const stored = readThemePref();
   applyTheme(stored || systemTheme());
   if (!stored && window.matchMedia) {
     window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
-      if (!localStorage.getItem(THEME_KEY)) applyTheme(systemTheme());
+      if (!readThemePref()) applyTheme(systemTheme());
     });
   }
 }
@@ -44,7 +52,7 @@ function initTheme() {
 function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || systemTheme();
   const next = current === "light" ? "dark" : "light";
-  localStorage.setItem(THEME_KEY, next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* theme just won't persist */ }
   applyTheme(next);
 }
 
@@ -65,6 +73,36 @@ document.getElementById("themeToggle").addEventListener("click", toggleTheme);
   // Fallback in case the load event is delayed by a slow network
   setTimeout(dismiss, 2500);
 })();
+
+/* ------------------------------------------------------- install prompt */
+const INSTALL_DISMISSED_KEY = "viperTracker.installDismissed.v1";
+let deferredInstallPrompt = null;
+
+function isRunningStandalone() {
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  if (isRunningStandalone()) return;
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const installSection = document.getElementById("settingsInstallSection");
+  if (installSection) installSection.hidden = false;
+
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(INSTALL_DISMISSED_KEY) === "1"; } catch (err) { /* ignore */ }
+  if (dismissed) return;
+  const banner = document.getElementById("installBanner");
+  if (banner) banner.hidden = false;
+});
+
+window.addEventListener("appinstalled", () => {
+  const banner = document.getElementById("installBanner");
+  if (banner) banner.hidden = true;
+  const installSection = document.getElementById("settingsInstallSection");
+  if (installSection) installSection.hidden = true;
+  deferredInstallPrompt = null;
+});
 
 /* ------------------------------------------------------------ small utils */
 function $(id) { return document.getElementById(id); }
@@ -97,6 +135,21 @@ function showToast(msg) {
 }
 
 /* -------------------------------------------------------------- storage */
+let storageWarningShown = false;
+
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    if (!storageWarningShown) {
+      storageWarningShown = true;
+      showToast("⚠ Couldn't save — storage may be full or private browsing is blocking it");
+    }
+    return false;
+  }
+}
+
 function loadAllLogs() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
@@ -106,7 +159,7 @@ function loadAllLogs() {
 }
 
 function saveAllLogs(logs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  safeSetItem(STORAGE_KEY, JSON.stringify(logs));
 }
 
 function loadSettings() {
@@ -118,7 +171,7 @@ function loadSettings() {
 }
 
 function saveSettings(settings) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  safeSetItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 /* -------------------------------------------------------- default shapes */
@@ -852,7 +905,7 @@ function renderHistory() {
           <div class="history-date">${dk}</div>
           <div class="history-day">Day ${log.splitDay} — ${entry.label}</div>
         </div>
-        <button class="link-btn" data-delete-date="${dk}" aria-label="Delete">✕</button>
+        <button class="link-btn" data-delete-date="${dk}" aria-label="Delete log for ${dk}">✕</button>
       </div>
       <div class="history-stats">
         <span class="history-stat">Diet ${pct(dTot)}%</span>
@@ -948,9 +1001,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("bottomNav").addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
-    document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach((b) => { b.classList.remove("active"); b.removeAttribute("aria-current"); });
     document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
     btn.classList.add("active");
+    btn.setAttribute("aria-current", "page");
     $(`panel-${btn.dataset.tab}`).classList.add("active");
     $("pageTitle").textContent = TAB_TITLES[btn.dataset.tab];
     window.scrollTo(0, 0);
@@ -971,7 +1025,16 @@ document.addEventListener("DOMContentLoaded", () => {
   $("bodyWeightInput").addEventListener("input", (e) => {
     updateDayLog(todayKey(), (log) => { log.bodyWeight = e.target.value; });
   });
-  $("bodyWeightInput").addEventListener("change", () => renderAll());
+  $("bodyWeightInput").addEventListener("change", (e) => {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val) && (val < 20 || val > 400)) {
+      const clamped = String(Math.min(400, Math.max(20, val)));
+      e.target.value = clamped;
+      updateDayLog(todayKey(), (log) => { log.bodyWeight = clamped; });
+      showToast("Body weight adjusted to a realistic range (20–400kg)");
+    }
+    renderAll();
+  });
 
   // Diet type toggle (event delegation on diet content)
   $("dietContent").addEventListener("click", (e) => {
@@ -1050,6 +1113,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
+  });
+
+  // Settings modal
+  const openSettings = () => { $("settingsModal").hidden = false; };
+  const closeSettings = () => { $("settingsModal").hidden = true; };
+  $("settingsBtn").addEventListener("click", openSettings);
+  $("settingsClose").addEventListener("click", closeSettings);
+  $("settingsBackdrop").addEventListener("click", closeSettings);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("settingsModal").hidden) closeSettings();
+  });
+  $("settingsResetToday").addEventListener("click", () => {
+    resetToday(todayKey());
+    closeSettings();
+  });
+  $("settingsInstallBtn").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    $("settingsInstallSection").hidden = true;
+    closeSettings();
+  });
+
+  // Install banner
+  $("installBannerInstall").addEventListener("click", async () => {
+    const banner = $("installBanner");
+    if (!deferredInstallPrompt) { banner.hidden = true; return; }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    banner.hidden = true;
+  });
+  $("installBannerClose").addEventListener("click", () => {
+    $("installBanner").hidden = true;
+    try { localStorage.setItem(INSTALL_DISMISSED_KEY, "1"); } catch (e) { /* ignore */ }
   });
 
   // History actions
