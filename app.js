@@ -1190,14 +1190,18 @@ function mergeLogsPreservingExisting(existing, incoming) {
   return merged;
 }
 
+function applyBackupText(text) {
+  const data = JSON.parse(text);
+  if (!data.logs) throw new Error("Invalid file");
+  saveAllLogs(mergeLogsPreservingExisting(loadAllLogs(), data.logs));
+  if (data.settings) saveSettings(data.settings);
+}
+
 function importJson(file) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result);
-      if (!data.logs) throw new Error("Invalid file");
-      saveAllLogs(mergeLogsPreservingExisting(loadAllLogs(), data.logs));
-      if (data.settings) saveSettings(data.settings);
+      applyBackupText(reader.result);
       showToast("Backup merged in");
       renderAll();
     } catch (e) {
@@ -1359,6 +1363,18 @@ document.addEventListener("DOMContentLoaded", () => {
   $("settingsResetToday").addEventListener("click", () => {
     resetToday(todayKey());
     closeSettings();
+  });
+  $("pasteBackupBtn").addEventListener("click", () => {
+    const text = $("pasteBackupInput").value.trim();
+    if (!text) { showToast("Paste the backup JSON text first"); return; }
+    try {
+      applyBackupText(text);
+      $("pasteBackupInput").value = "";
+      showToast("Backup merged in");
+      renderAll();
+    } catch (e) {
+      alert("Could not import that text — make sure you copied the entire backup file's contents.");
+    }
   });
   $("settingsInstallBtn").addEventListener("click", async () => {
     if (!deferredInstallPrompt) return;

@@ -190,6 +190,13 @@
     </div>
 
     <div class="settings-section">
+      <h3>Restore Backup by Pasting Text</h3>
+      <p class="mini-note">If the file picker on the Progress tab doesn't work, open the backup file's contents (email, Files app, etc.), copy the whole thing, and paste it below instead.</p>
+      <textarea id="pasteBackupInput" placeholder="Paste backup JSON here..." style="min-height:70px"></textarea>
+      <button class="btn btn-primary" id="pasteBackupBtn" style="width:100%;margin-top:8px">Import Pasted Backup</button>
+    </div>
+
+    <div class="settings-section">
       <h3>About</h3>
       <p class="mini-note"><strong>Disclaimer:</strong> <span id="disclaimerText"></span></p>
       <p class="coach-line" id="coachLine"></p>
