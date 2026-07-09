@@ -486,6 +486,102 @@ function checkItemHtml(text, checked, kind, section, index, note) {
     </label>`;
 }
 
+function itemText(it) {
+  return typeof it === "string" ? it : it.text;
+}
+
+function itemKcalNote(it) {
+  return typeof it === "string" ? "" : `${Math.round(it.kcal)} kcal`;
+}
+
+function sectionKcal(items) {
+  return items.reduce((sum, it) => sum + (typeof it === "string" ? 0 : it.kcal || 0), 0);
+}
+
+function checkedItemsHtml(items, checks, key) {
+  return items.map((it, i) => checkItemHtml(itemText(it), checks[i], "diet", key, i, itemKcalNote(it))).join("");
+}
+
+/* ------------------------------------------------------------- macro pie */
+function computeDietMacros(log) {
+  const type = log.dietChecks.dietType;
+  const entry = splitEntryFor(log.splitDay);
+  const training = entry.type === "training";
+  let kcal = 0, protein = 0, carbs = 0, fat = 0;
+
+  const sumSection = (items, checks) => {
+    (items || []).forEach((it, i) => {
+      if (!checks || !checks[i] || typeof it === "string") return;
+      kcal += it.kcal || 0;
+      protein += it.protein || 0;
+      carbs += it.carbs || 0;
+      fat += it.fat || 0;
+    });
+  };
+
+  [1, 2, 3, 4].forEach((n) => sumSection(PLAN.diet.meals[n][type], log.dietChecks["meal" + n]));
+  if (training) {
+    sumSection(PLAN.diet.training.preWorkout.items, log.dietChecks.preWorkout);
+    sumSection(PLAN.diet.training.intraWorkout.items, log.dietChecks.intraWorkout);
+    sumSection(PLAN.diet.training.postWorkout.items, log.dietChecks.postWorkout);
+  }
+
+  return { kcal, protein, carbs, fat };
+}
+
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const a = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+}
+
+function pieSlicePath(cx, cy, r, startAngle, endAngle) {
+  const clampedEnd = endAngle - startAngle >= 359.99 ? startAngle + 359.99 : endAngle;
+  const start = polarToCartesian(cx, cy, r, clampedEnd);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArc = clampedEnd - startAngle > 180 ? 1 : 0;
+  return `M ${cx},${cy} L ${start.x.toFixed(2)},${start.y.toFixed(2)} A ${r},${r} 0 ${largeArc} 0 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z`;
+}
+
+function buildMacroPie(macros) {
+  const proteinKcal = macros.protein * 4, carbKcal = macros.carbs * 4, fatKcal = macros.fat * 9;
+  const total = proteinKcal + carbKcal + fatKcal;
+
+  if (total <= 0) {
+    return `<p class="mini-note">Check off diet items below to see today's macro breakdown here.</p>`;
+  }
+
+  const size = 140, r = 62, cx = size / 2, cy = size / 2;
+  const segments = [
+    { label: "Protein", grams: macros.protein, kcal: proteinKcal, color: "var(--accent)" },
+    { label: "Carbs", grams: macros.carbs, kcal: carbKcal, color: "var(--teal)" },
+    { label: "Fat", grams: macros.fat, kcal: fatKcal, color: "var(--accent-2)" },
+  ];
+
+  let angle = 0;
+  let paths = "";
+  segments.forEach((seg) => {
+    const sweep = (seg.kcal / total) * 360;
+    if (sweep > 0.5) paths += `<path d="${pieSlicePath(cx, cy, r, angle, angle + sweep)}" fill="${seg.color}" />`;
+    angle += sweep;
+  });
+
+  const legend = segments.map((seg) => {
+    const pct = Math.round((seg.kcal / total) * 100);
+    return `<div class="macro-legend-item">
+      <span class="macro-dot" style="background:${seg.color}"></span>
+      <span class="macro-legend-label">${seg.label}</span>
+      <span class="macro-legend-pct">${pct}%</span>
+      <span class="macro-legend-g">${Math.round(seg.grams)}g</span>
+    </div>`;
+  }).join("");
+
+  return `
+    <div class="macro-pie-wrap">
+      <svg viewBox="0 0 ${size} ${size}" class="macro-pie-svg">${paths}</svg>
+      <div class="macro-legend">${legend}</div>
+    </div>`;
+}
+
 function renderDiet(dateKey, log) {
   const entry = splitEntryFor(log.splitDay);
   const type = log.dietChecks.dietType;
@@ -501,6 +597,14 @@ function renderDiet(dateKey, log) {
     <p class="mini-note">Today is <strong>Day ${log.splitDay} — ${entry.label}</strong> (${entry.type === "training" ? "training" : "rest"} day). Diet is auto-matched to your split, but you can override above. ${PLAN.diet.note}</p>
   </div>`;
 
+  const macros = computeDietMacros(log);
+  html += `<div class="card">
+    <h2>Today's Nutrition</h2>
+    <div class="kcal-total">${Math.round(macros.kcal)} <span>kcal consumed so far</span></div>
+    ${buildMacroPie(macros)}
+    <p class="mini-note">Calories are rough estimates for generic ingredients — actual whey/EAA/carb powder brands vary. Only checked-off items count here.</p>
+  </div>`;
+
   html += `<div class="card">
     <h2>${PLAN.diet.morningDrink.title}</h2>
     <p class="mini-note">${PLAN.diet.morningDrink.subtitle}</p>
@@ -511,9 +615,12 @@ function renderDiet(dateKey, log) {
     const meal = PLAN.diet.meals[n];
     const items = meal[type];
     html += `<div class="card meal-block">
-      <div class="meal-title">${meal.name}</div>
+      <div class="meal-title-row">
+        <div class="meal-title">${meal.name}</div>
+        <div class="meal-kcal">${sectionKcal(items)} kcal</div>
+      </div>
       ${meal.subtitle ? `<div class="meal-subtitle">${meal.subtitle}</div>` : ""}
-      ${items.map((it, i) => checkItemHtml(it, log.dietChecks["meal" + n][i], "diet", "meal" + n, i)).join("")}
+      ${checkedItemsHtml(items, log.dietChecks["meal" + n], "meal" + n)}
       ${meal.note ? `<p class="mini-note">${meal.note}</p>` : ""}
     </div>`;
   };
@@ -525,9 +632,12 @@ function renderDiet(dateKey, log) {
     ["preWorkout", "intraWorkout", "postWorkout"].forEach((key) => {
       const sec = tw[key];
       html += `<div class="card">
-        <h2>${sec.title}</h2>
+        <div class="meal-title-row">
+          <h2 style="margin-bottom:0">${sec.title}</h2>
+          <div class="meal-kcal">${sectionKcal(sec.items)} kcal</div>
+        </div>
         <p class="mini-note">${sec.subtitle}</p>
-        ${sec.items.map((it, i) => checkItemHtml(it, log.dietChecks[key][i], "diet", key, i)).join("")}
+        ${checkedItemsHtml(sec.items, log.dietChecks[key], key)}
       </div>`;
     });
   } else {
@@ -784,30 +894,42 @@ function renderWorkout(dateKey, log) {
   $("workoutContent").innerHTML = html;
 }
 
+const SUPP_TIME_SECTIONS = [
+  { key: "AM", label: "Morning", icon: "🌅" },
+  { key: "Midday", label: "Midday", icon: "☀️" },
+  { key: "Post-Workout", label: "Post-Workout", icon: "💪" },
+  { key: "PM", label: "Evening", icon: "🌆" },
+  { key: "Before Bed", label: "Before Bed", icon: "🌙" },
+];
+
 function renderSupplements(dateKey, log) {
-  let html = `<div class="card"><h2>Daily Supplement Schedule</h2>`;
-  PLAN.supplements.forEach((s, i) => {
-    const checks = log.supplementChecks[i] || {};
-    html += `<div class="supp-row">
-      <div>
-        <div class="supp-name">${s.name}</div>
-        <div class="supp-brand">${s.brand}</div>
+  let html = "";
+
+  SUPP_TIME_SECTIONS.forEach((section) => {
+    const rows = PLAN.supplements
+      .map((s, i) => ({ s, i }))
+      .filter(({ s }) => s.timing.includes(section.key));
+    if (!rows.length) return;
+
+    const doneCount = rows.filter(({ i }) => (log.supplementChecks[i] || {})[section.key]).length;
+
+    html += `<div class="card">
+      <div class="meal-title-row">
+        <h2 style="margin-bottom:0">${section.icon} ${section.label}</h2>
+        <div class="meal-kcal">${doneCount}/${rows.length}</div>
       </div>
-      <div>
-        <div class="supp-dosage">${s.dosage}</div>
-        ${s.note ? `<div class="supp-note">${s.note}</div>` : ""}
-      </div>
-      <div class="supp-checks">
-        ${s.timing.map((t) => `
-          <label class="supp-check">
-            <input type="checkbox" data-kind="supp" data-index="${i}" data-timing="${t}" ${checks[t] ? "checked" : ""} />
-            ${t}
-          </label>
-        `).join("")}
-      </div>
+      ${rows.map(({ s, i }) => {
+        const checked = !!(log.supplementChecks[i] || {})[section.key];
+        const note = `${s.dosage} · ${s.brand}${s.note ? ` · ${s.note}` : ""}`;
+        return `
+          <label class="check-item ${checked ? "checked" : ""}">
+            <input type="checkbox" data-kind="supp" data-index="${i}" data-timing="${section.key}" ${checked ? "checked" : ""} />
+            <span class="item-text">${s.name}<span class="item-note">${note}</span></span>
+          </label>`;
+      }).join("")}
     </div>`;
   });
-  html += `</div>`;
+
   $("supplementsContent").innerHTML = html;
 }
 

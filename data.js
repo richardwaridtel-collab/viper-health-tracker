@@ -25,49 +25,64 @@ const PLAN = {
       ],
     },
     note: "1 scoop whey = 8 egg whites (substitution note from coach)",
+    // Calories/macros are reasonable estimates for generic ingredients (USDA-style
+    // per-100g references), not brand-verified values — actual whey/EAA/carb powder
+    // products vary. Good enough for a rough daily macro picture, not a lab report.
     meals: {
       1: {
         name: "Meal 1",
-        A: ["Whole egg x2", "Oats 35g", "Whey 1 scoop", "Banana 1"],
-        B: ["Whole egg x3", "Egg white x5"],
+        A: [
+          { text: "Whole egg x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
+          { text: "Oats 35g", kcal: 133, protein: 4.7, carbs: 23.5, fat: 2.3 },
+          { text: "Whey 1 scoop", kcal: 120, protein: 24, carbs: 3, fat: 1.5 },
+          { text: "Banana 1", kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
+        ],
+        B: [
+          { text: "Whole egg x3", kcal: 216, protein: 18.9, carbs: 1.2, fat: 14.4 },
+          { text: "Egg white x5", kcal: 85, protein: 18, carbs: 1.2, fat: 0 },
+        ],
       },
       2: {
         name: "Meal 2",
         A: [
-          "165g chicken breast / beef / fish (cooked weight)",
-          "120g cooked rice (cooked weight)",
-          "1 apple (red or green)",
-          "Whole egg x1",
-          "Green veg 70g",
+          { text: "165g chicken breast / beef / fish (cooked weight)", kcal: 272, protein: 51.2, carbs: 0, fat: 5.9 },
+          { text: "120g cooked rice (cooked weight)", kcal: 156, protein: 3.2, carbs: 33.6, fat: 0.4 },
+          { text: "1 apple (red or green)", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+          { text: "Whole egg x1", kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8 },
+          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
         ],
         B: [
-          "160g chicken breast / beef / fish (cooked weight)",
-          "1 apple",
-          "Green veg 70g",
+          { text: "160g chicken breast / beef / fish (cooked weight)", kcal: 264, protein: 49.6, carbs: 0, fat: 5.8 },
+          { text: "1 apple", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
         ],
       },
       3: {
         name: "Meal 3",
         A: [
-          "170g chicken breast (cooked weight)",
-          "Extra virgin olive oil — 1 tbsp",
-          "Green veg 70g",
+          { text: "170g chicken breast (cooked weight)", kcal: 280, protein: 52.7, carbs: 0, fat: 6.1 },
+          { text: "Extra virgin olive oil — 1 tbsp", kcal: 124, protein: 0, carbs: 0, fat: 14 },
+          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
         ],
         B: [
-          "180g chicken / fish / beef",
-          "Veg 100g",
-          "1 tbsp olive oil on top",
+          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
+          { text: "Veg 100g", kcal: 28, protein: 2, carbs: 5.6, fat: 0.2 },
+          { text: "1 tbsp olive oil on top", kcal: 124, protein: 0, carbs: 0, fat: 14 },
         ],
-        note: "You can mash potato with olive oil",
+        note: "You can mash potato with olive oil (not counted in calories above)",
       },
       4: {
         name: "Meal 4",
         subtitle: "Last meal — anytime you want",
-        A: ["180g chicken / fish / beef", "Olive oil — 5ml", "Green salad 70-100g"],
+        A: [
+          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
+          { text: "Olive oil — 5ml", kcal: 40, protein: 0, carbs: 0, fat: 4.5 },
+          { text: "Green salad 70-100g", kcal: 13, protein: 1, carbs: 2.5, fat: 0.2 },
+        ],
         B: [
-          "180g chicken / fish / beef",
-          "Whole egg x2",
-          "1 tbsp olive oil on top",
+          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
+          { text: "Whole egg x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
+          { text: "1 tbsp olive oil on top", kcal: 124, protein: 0, carbs: 0, fat: 14 },
         ],
       },
     },
@@ -76,22 +91,29 @@ const PLAN = {
         title: "Pre-Workout",
         subtitle: "45 minutes before workout — training days only",
         items: [
-          "1 scoop EAA",
-          "15g carb powder (or 40g dates)",
-          "Salt 2g",
-          "3g L-citrulline",
-          "5g L-arginine",
+          { text: "1 scoop EAA", kcal: 15, protein: 3, carbs: 0, fat: 0 },
+          { text: "15g carb powder (or 40g dates)", kcal: 57, protein: 0, carbs: 15, fat: 0 },
+          { text: "Salt 2g", kcal: 0, protein: 0, carbs: 0, fat: 0 },
+          { text: "3g L-citrulline", kcal: 0, protein: 0, carbs: 0, fat: 0 },
+          { text: "5g L-arginine", kcal: 0, protein: 0, carbs: 0, fat: 0 },
         ],
       },
       intraWorkout: {
         title: "Intra-Workout",
         subtitle: "During workout — training days only",
-        items: ["1 scoop EAA", "20g carb powder (or dextrose)", "Salt 3g"],
+        items: [
+          { text: "1 scoop EAA", kcal: 15, protein: 3, carbs: 0, fat: 0 },
+          { text: "20g carb powder (or dextrose)", kcal: 76, protein: 0, carbs: 20, fat: 0 },
+          { text: "Salt 3g", kcal: 0, protein: 0, carbs: 0, fat: 0 },
+        ],
       },
       postWorkout: {
         title: "Post-Workout Shake",
         subtitle: "Training days only",
-        items: ["1 scoop whey", "Banana 60g"],
+        items: [
+          { text: "1 scoop whey", kcal: 120, protein: 24, carbs: 3, fat: 1.5 },
+          { text: "Banana 60g", kcal: 52, protein: 0.65, carbs: 13.5, fat: 0.2 },
+        ],
       },
     },
     beforeBed: {

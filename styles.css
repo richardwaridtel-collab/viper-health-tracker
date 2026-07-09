@@ -402,6 +402,63 @@ textarea { min-height: 90px; resize: vertical; }
 .meal-title { font-weight: 700; font-size: 16px; margin-bottom: 2px; }
 .meal-subtitle { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
 
+.meal-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.meal-title-row .meal-title { margin-bottom: 0; }
+.meal-kcal {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- NUTRITION */
+.kcal-total {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.kcal-total span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+
+.macro-pie-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.macro-pie-svg { width: 120px; height: 120px; flex-shrink: 0; }
+
+.macro-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.macro-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.macro-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.macro-legend-label { flex: 1; }
+.macro-legend-pct { font-weight: 800; }
+.macro-legend-g { color: var(--text-dim); font-size: 11.5px; min-width: 36px; text-align: right; }
+
 .check-item {
   display: flex;
   align-items: flex-start;
@@ -667,59 +724,6 @@ textarea { min-height: 90px; resize: vertical; }
   min-width: 52px;
 }
 .timer-btn-cancel { color: var(--text-dim); background: var(--bg-alt); }
-
-/* -------------------------------------------------------------- SUPPLEMENTS */
-.supp-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 0;
-  border-top: 1px solid var(--card-border);
-}
-.supp-row:first-of-type { border-top: none; padding-top: 4px; }
-
-.supp-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.supp-name { font-weight: 800; font-size: 14.5px; }
-.supp-brand { font-size: 11.5px; color: var(--text-dim); margin-top: 1px; }
-.supp-dosage { font-size: 12.5px; color: var(--text-dim); text-align: right; max-width: 55%; }
-.supp-note { font-size: 11px; color: var(--warn); font-style: italic; margin-top: 4px; }
-
-.supp-checks { display: flex; gap: 8px; flex-wrap: wrap; }
-
-.supp-check {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-dim);
-  cursor: pointer;
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
-  padding: 7px 12px 7px 8px;
-  border-radius: 999px;
-}
-
-.supp-check input {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 18px; height: 18px;
-  border-radius: 999px;
-  border: 2px solid var(--card-border);
-  background: var(--card);
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.supp-check input:checked { background: var(--good); border-color: var(--good); }
-.supp-check input:checked::after {
-  content: "";
-  position: absolute; left: 50%; top: 42%;
-  width: 4px; height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
 
 /* ------------------------------------------------------------------ HEATMAP */
 .heatmap-wrap { overflow-x: auto; }
@@ -1033,8 +1037,6 @@ textarea { min-height: 90px; resize: vertical; }
 
 @media (max-width: 380px) {
   .rings-row { grid-template-columns: repeat(2, 1fr); row-gap: 16px; }
-  .supp-dosage { max-width: 100%; text-align: left; }
-  .supp-top { flex-direction: column; }
 }
 
 /* ------------------------------------------------------- MICRO-INTERACTIONS */
