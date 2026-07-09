@@ -1213,7 +1213,16 @@ function importJson(file) {
 
 /* ---------------------------------------------------------------- events */
 document.addEventListener("DOMContentLoaded", () => {
-  renderAll();
+  // If rendering throws (e.g. unexpected data shape), don't let it silently
+  // abort every listener registration below — that would leave the whole
+  // app unresponsive with zero indication of why. Log it and keep going so
+  // the user can still navigate to Settings and reset their data.
+  try {
+    renderAll();
+  } catch (err) {
+    console.error("Initial render failed:", err);
+    showToast("⚠ Something went wrong loading your data — see Settings to reset");
+  }
 
   // Bottom tab navigation
   $("bottomNav").addEventListener("click", (e) => {
@@ -1304,7 +1313,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Checkbox delegation for diet / workout / supplements
-  ["dietContent", "workoutContent", "supplementsContent", "upNextContent"].forEach((id) => {
+  ["dietContent", "workoutContent", "supplementsContent"].forEach((id) => {
     $(id).addEventListener("change", (e) => {
       const t = e.target;
       if (t.tagName !== "INPUT") return;
@@ -1363,6 +1372,15 @@ document.addEventListener("DOMContentLoaded", () => {
   $("settingsResetToday").addEventListener("click", () => {
     resetToday(todayKey());
     closeSettings();
+  });
+  $("settingsResetAll").addEventListener("click", () => {
+    const ok = confirm("This permanently erases every tracked day on this device — diet, workout, supplements, weight, waist, everything. This cannot be undone. Continue?");
+    if (!ok) return;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SETTINGS_KEY);
+    } catch (e) { /* ignore */ }
+    location.reload();
   });
   $("pasteBackupBtn").addEventListener("click", () => {
     const text = $("pasteBackupInput").value.trim();
