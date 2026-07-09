@@ -366,31 +366,74 @@ function weeklyAverages(field) {
   }));
 }
 
-function buildLineChart(points, unit) {
+function formatChartDate(dateStr) {
+  if (dateStr.length === 7) {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return monthNames[parseInt(dateStr.split("-")[1], 10) - 1];
+  }
+  const parts = dateStr.split("-");
+  return `${parts[1]}-${parts[2]}`;
+}
+
+function formatChartValue(v) {
+  return v.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function buildLineChart(points, unit, chartId) {
   if (points.length < 2) {
-    return `<p class="mini-note">Log this for a couple of weeks to see a trend line here.</p>`;
+    return `<p class="mini-note">Log a couple of entries to see a trend line here.</p>`;
   }
   const values = points.map((p) => p.value);
   const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
-  const w = 100, h = 40, padY = 4;
-  const stepX = w / (points.length - 1);
-  const coords = points.map((p, i) => {
-    const x = i * stepX;
-    const y = padY + (h - 2 * padY) * (1 - (p.value - min) / range);
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const path = "M" + coords.join(" L");
+
+  const W = 640, H = 280;
+  const padTop = 34, padBottom = 28, padX = 16;
+  const plotW = W - padX * 2;
+  const plotH = H - padTop - padBottom;
+  const n = points.length;
+  const stepX = n > 1 ? plotW / (n - 1) : 0;
+
+  const coords = points.map((p, i) => ({
+    x: padX + i * stepX,
+    y: padTop + plotH * (1 - (p.value - min) / range),
+    value: p.value,
+    date: p.date,
+  }));
+
+  const linePath = "M" + coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" L");
+  const baseY = (padTop + plotH).toFixed(1);
+  const areaPath = `${linePath} L${coords[n - 1].x.toFixed(1)},${baseY} L${coords[0].x.toFixed(1)},${baseY} Z`;
+
+  const labelEvery = Math.max(1, Math.ceil(n / 8));
+  const showLabel = (i) => i % labelEvery === 0 || i === n - 1;
+
+  const valueLabels = coords.map((c, i) => showLabel(i)
+    ? `<text x="${c.x.toFixed(1)}" y="${(c.y - 12).toFixed(1)}" class="chart-value-label" text-anchor="middle">${formatChartValue(c.value)}</text>`
+    : "").join("");
+
+  const dateLabels = coords.map((c, i) => showLabel(i)
+    ? `<text x="${c.x.toFixed(1)}" y="${H - 8}" class="chart-date-label" text-anchor="middle">${formatChartDate(c.date)}</text>`
+    : "").join("");
+
+  const dots = coords.map((c) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" class="chart-dot" />`).join("");
+  const gid = `${chartId}-fill`;
 
   return `
-    <svg class="weight-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke" />
-    </svg>
-    <div class="weight-chart-labels">
-      <span>${min.toFixed(1)}${unit}</span>
-      <span>Week of ${points[0].date} → ${points[points.length - 1].date}</span>
-      <span>${max.toFixed(1)}${unit}</span>
-    </div>`;
+    <svg class="rich-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#${gid})" stroke="none" />
+      <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+      ${dots}
+      ${valueLabels}
+      ${dateLabels}
+      <text x="${padX}" y="16" class="chart-unit-label">${unit}</text>
+    </svg>`;
 }
 
 function computeStreak(logs) {
@@ -521,8 +564,8 @@ function renderMeasureCharts() {
   const waistWeekly = weeklyAverages("waist");
   const weightPoints = measureRange === "monthly" ? monthlyFromWeekly(weightWeekly) : weightWeekly;
   const waistPoints = measureRange === "monthly" ? monthlyFromWeekly(waistWeekly) : waistWeekly;
-  $("weightWeeklyChart").innerHTML = buildLineChart(weightPoints, "kg");
-  $("waistWeeklyChart").innerHTML = buildLineChart(waistPoints, "in");
+  $("weightWeeklyChart").innerHTML = buildLineChart(weightPoints, "kg", "weightWeeklyChart");
+  $("waistWeeklyChart").innerHTML = buildLineChart(waistPoints, "in", "waistWeeklyChart");
 }
 
 function checkItemHtml(text, checked, kind, section, index, note) {
@@ -1027,34 +1070,14 @@ function renderWeightChart() {
   const points = Object.keys(logs)
     .filter((dk) => parseFloat(logs[dk].bodyWeight) > 0)
     .sort()
-    .map((dk) => ({ date: dk, weight: parseFloat(logs[dk].bodyWeight) }));
+    .map((dk) => ({ date: dk, value: parseFloat(logs[dk].bodyWeight) }));
 
   if (points.length < 2) {
     $("weightChartWrap").innerHTML = `<p class="mini-note">Log your body weight on the Today tab for a few days to see a trend line here.</p>`;
     return;
   }
 
-  const weights = points.map((p) => p.weight);
-  const min = Math.min(...weights), max = Math.max(...weights);
-  const range = max - min || 1;
-  const w = 100, h = 40, padY = 4;
-  const stepX = w / (points.length - 1);
-  const coords = points.map((p, i) => {
-    const x = i * stepX;
-    const y = padY + (h - 2 * padY) * (1 - (p.weight - min) / range);
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const path = "M" + coords.join(" L");
-
-  $("weightChartWrap").innerHTML = `
-    <svg class="weight-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke" />
-    </svg>
-    <div class="weight-chart-labels">
-      <span>${min.toFixed(1)}kg</span>
-      <span>${points[0].date} → ${points[points.length - 1].date}</span>
-      <span>${max.toFixed(1)}kg</span>
-    </div>`;
+  $("weightChartWrap").innerHTML = buildLineChart(points, "kg", "weightChartWrap");
 }
 
 function renderHistory() {

@@ -772,17 +772,28 @@ textarea { min-height: 90px; resize: vertical; }
 .heatmap-legend .heatmap-cell { display: inline-block; }
 
 /* -------------------------------------------------------------- WEIGHT CHART */
-.weight-chart-svg {
+.rich-chart-svg {
   width: 100%;
-  height: 100px;
+  height: auto;
   display: block;
+  overflow: visible;
 }
-.weight-chart-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 6px;
+.chart-dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+.chart-value-label {
+  fill: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font);
+}
+.chart-date-label {
+  fill: var(--text-dim);
+  font-size: 15px;
+  font-family: var(--font);
+}
+.chart-unit-label {
+  fill: var(--text-dim);
+  font-size: 14px;
+  font-family: var(--font);
 }
 
 /* ------------------------------------------------------------------ HISTORY */
