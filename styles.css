@@ -5,9 +5,13 @@
   --card-border: #262b38;
   --text: #eef0f4;
   --text-dim: #8b91a3;
-  --accent: #ff4d3d;
+  --accent: #c6ff3d;
+  --on-accent: #10130a;
   --accent-2: #ffb020;
-  --accent-dim: #ff4d3d26;
+  --accent-dim: #c6ff3d26;
+  --accent-40: #c6ff3d40;
+  --accent-80: #c6ff3d80;
+  --accent-bb: #c6ff3dbb;
   --teal: #2dd4bf;
   --good: #34d17c;
   --warn: #f5b942;
@@ -30,9 +34,13 @@
   --card-border: #e1e4ec;
   --text: #171a21;
   --text-dim: #676d7e;
-  --accent: #e8432f;
+  --accent: #4d6600;
+  --on-accent: #ffffff;
   --accent-2: #c47a05;
-  --accent-dim: #e8432f1a;
+  --accent-dim: #4d66001a;
+  --accent-40: #4d660040;
+  --accent-80: #4d660080;
+  --accent-bb: #4d6600bb;
   --teal: #0d8f83;
   --good: #1f9d55;
   --warn: #b45309;
@@ -199,8 +207,9 @@ main {
 
 .card h2 {
   font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.1px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
   margin-bottom: 12px;
 }
 
@@ -373,8 +382,8 @@ textarea { min-height: 90px; resize: vertical; }
 
 .diet-toggle button.active {
   background: var(--accent);
-  color: white;
-  box-shadow: 0 3px 10px #ff4d3d40;
+  color: var(--on-accent);
+  box-shadow: 0 3px 10px var(--accent-40);
 }
 
 .meal-block {
@@ -384,7 +393,7 @@ textarea { min-height: 90px; resize: vertical; }
 }
 .meal-block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 
-.meal-title { font-weight: 800; font-size: 14.5px; margin-bottom: 2px; }
+.meal-title { font-weight: 900; font-size: 15px; letter-spacing: 0.2px; text-transform: uppercase; margin-bottom: 2px; }
 .meal-subtitle { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
 
 .check-item {
@@ -497,7 +506,7 @@ textarea { min-height: 90px; resize: vertical; }
   gap: 10px;
 }
 
-.exercise-title { font-weight: 800; font-size: 14.5px; margin-top: 1px; }
+.exercise-title { font-weight: 900; font-size: 15px; letter-spacing: 0.2px; text-transform: uppercase; margin-top: 1px; }
 .exercise-muscle { font-size: 11px; color: var(--teal); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
 
 .exercise-head input[type="checkbox"] {
@@ -723,9 +732,9 @@ textarea { min-height: 90px; resize: vertical; }
   border: 1px solid var(--card-border);
 }
 .heatmap-cell.level-1 { background: var(--bg-alt); }
-.heatmap-cell.level-2 { background: #ff4d3d40; border-color: transparent; }
-.heatmap-cell.level-3 { background: #ff4d3d80; border-color: transparent; }
-.heatmap-cell.level-4 { background: #ff4d3dbb; border-color: transparent; }
+.heatmap-cell.level-2 { background: var(--accent-40); border-color: transparent; }
+.heatmap-cell.level-3 { background: var(--accent-80); border-color: transparent; }
+.heatmap-cell.level-4 { background: var(--accent-bb); border-color: transparent; }
 .heatmap-cell.level-5 { background: var(--accent); border-color: transparent; }
 .heatmap-legend {
   display: flex;
@@ -771,7 +780,7 @@ textarea { min-height: 90px; resize: vertical; }
   font-weight: 700;
   cursor: pointer;
 }
-.btn-primary { background: var(--accent); color: white; }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
 .btn-secondary { background: var(--bg-alt); color: var(--text); border: 1px solid var(--card-border); }
 .file-btn { display: inline-flex; align-items: center; }
 
@@ -804,7 +813,7 @@ textarea { min-height: 90px; resize: vertical; }
   font-weight: 700;
   color: var(--text-dim);
 }
-.history-stat.overall { color: var(--accent); border-color: #ff4d3d40; }
+.history-stat.overall { color: var(--accent); border-color: var(--accent-40); }
 
 .empty-hint { color: var(--text-dim); font-size: 13px; text-align: center; padding: 10px 0 0; }
 
@@ -856,7 +865,7 @@ textarea { min-height: 90px; resize: vertical; }
 .nav-btn svg { width: 22px; height: 22px; }
 
 .nav-btn.active { color: var(--accent); }
-.nav-btn.active svg { filter: drop-shadow(0 0 6px #ff4d3d80); }
+.nav-btn.active svg { filter: drop-shadow(0 0 6px var(--accent-80)); }
 
 /* ---------------------------------------------------------------- SETTINGS */
 .settings-modal {

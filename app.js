@@ -359,14 +359,15 @@ function computeStreak(logs) {
   return streak;
 }
 
-const RING_COLORS = { Diet: "#ff4d3d", Workout: "#2dd4bf", Supps: "#ffb020", Overall: "#34d17c" };
+const RING_COLOR_VARS = { Diet: "--accent-2", Workout: "--teal", Supps: "--good", Overall: "--accent" };
 
 function buildRing(label, r) {
   const size = 64, stroke = 8, radius = (size - stroke) / 2;
   const c = 2 * Math.PI * radius;
   const p = pct(r);
   const offset = c * (1 - p / 100);
-  const color = RING_COLORS[label] || "#ff4d3d";
+  const varName = RING_COLOR_VARS[label] || "--accent";
+  const color = getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || "#c6ff3d";
   return `
     <div class="ring-item">
       <div class="ring-wrap">
