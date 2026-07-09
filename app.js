@@ -362,7 +362,7 @@ function computeStreak(logs) {
 const RING_COLOR_VARS = { Diet: "--accent-2", Workout: "--teal", Supps: "--good", Overall: "--accent" };
 
 function buildRing(label, r) {
-  const size = 64, stroke = 8, radius = (size - stroke) / 2;
+  const size = 76, stroke = 9, radius = (size - stroke) / 2;
   const c = 2 * Math.PI * radius;
   const p = pct(r);
   const offset = c * (1 - p / 100);

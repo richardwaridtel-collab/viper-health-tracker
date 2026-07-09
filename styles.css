@@ -15,8 +15,8 @@
   --teal: #2dd4bf;
   --good: #84cc16;
   --warn: #f5b942;
-  --header-grad: linear-gradient(180deg, #1a1c20, var(--bg));
-  --nav-bg: rgba(17, 18, 20, 0.92);
+  --header-grad: rgba(26, 28, 32, 0.72);
+  --nav-bg: rgba(17, 18, 20, 0.78);
   --radius-lg: 22px;
   --radius: 18px;
   --radius-sm: 14px;
@@ -44,13 +44,13 @@
   --teal: #0d8f83;
   --good: #3f6212;
   --warn: #b45309;
-  --header-grad: linear-gradient(180deg, #ffffff, var(--bg));
-  --nav-bg: rgba(255, 255, 255, 0.9);
+  --header-grad: rgba(255, 255, 255, 0.72);
+  --nav-bg: rgba(255, 255, 255, 0.75);
   color-scheme: light;
 }
 
 :root[data-theme="light"] .card {
-  box-shadow: 0 8px 20px -14px rgba(30, 34, 48, 0.18);
+  box-shadow: 0 1px 2px rgba(30, 34, 48, 0.06), 0 16px 32px -16px rgba(30, 34, 48, 0.22);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -112,6 +112,8 @@ h1, h2, h3, p { margin: 0; }
   gap: 12px;
   padding: calc(12px + var(--safe-top)) 18px 12px;
   background: var(--header-grad);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--card-border);
   position: sticky;
   top: 0;
@@ -202,7 +204,7 @@ main {
   border-radius: var(--radius-lg);
   padding: 18px;
   margin-bottom: 14px;
-  box-shadow: 0 8px 20px -12px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 16px 32px -14px rgba(0, 0, 0, 0.55);
 }
 
 .card h2 {
@@ -298,6 +300,11 @@ textarea { min-height: 90px; resize: vertical; }
 .day-chip.selected .dl { color: var(--accent); }
 
 /* ------------------------------------------------------------------ RINGS */
+.rings-card {
+  background: linear-gradient(155deg, var(--accent-dim), var(--card) 55%);
+  border-color: var(--accent-40);
+}
+
 .rings-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -307,15 +314,15 @@ textarea { min-height: 90px; resize: vertical; }
 
 .ring-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 
-.ring-svg { width: 64px; height: 64px; transform: rotate(-90deg); }
-.ring-track { fill: none; stroke: var(--bg-alt); stroke-width: 8; }
-.ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+.ring-svg { width: 76px; height: 76px; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--bg-alt); stroke-width: 9; }
+.ring-fill { fill: none; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
 
-.ring-wrap { position: relative; width: 64px; height: 64px; }
+.ring-wrap { position: relative; width: 76px; height: 76px; }
 .ring-pct {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800;
+  font-size: 15px; font-weight: 800;
 }
 
 .ring-label { font-size: 11px; color: var(--text-dim); font-weight: 700; }
@@ -836,9 +843,10 @@ textarea { min-height: 90px; resize: vertical; }
   height: calc(var(--nav-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   background: var(--nav-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-top: 1px solid var(--card-border);
+  box-shadow: 0 -8px 24px -12px rgba(0, 0, 0, 0.35);
   display: flex;
   z-index: 30;
   max-width: 640px;
@@ -861,9 +869,20 @@ textarea { min-height: 90px; resize: vertical; }
   padding: 6px 2px;
 }
 
-.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn svg { width: 21px; height: 21px; }
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 28px;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
 
 .nav-btn.active { color: var(--accent); }
+.nav-btn.active .nav-icon { background: var(--accent-dim); }
 .nav-btn.active svg { filter: drop-shadow(0 0 6px var(--accent-80)); }
 
 /* ---------------------------------------------------------------- SETTINGS */
@@ -1008,7 +1027,8 @@ textarea { min-height: 90px; resize: vertical; }
 
 @media (min-width: 480px) {
   .rings-row { gap: 14px; }
-  .ring-svg, .ring-wrap { width: 74px; height: 74px; }
+  .ring-svg, .ring-wrap { width: 88px; height: 88px; }
+  .ring-pct { font-size: 17px; }
 }
 
 @media (max-width: 380px) {
