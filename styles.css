@@ -327,40 +327,44 @@ textarea { min-height: 90px; resize: vertical; }
 
 .ring-label { font-size: 11px; color: var(--text-dim); font-weight: 700; }
 
-/* ------------------------------------------------------------ BODY WEIGHT */
-.bodyweight-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.bodyweight-row input {
-  width: 120px;
-  font-size: 18px;
+/* ------------------------------------------------------- BODY MEASUREMENTS */
+.measure-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.measure-field { flex: 1; min-width: 130px; }
+.measure-field label {
+  font-size: 11px;
+  color: var(--text-dim);
   font-weight: 700;
-  padding: 10px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 5px;
 }
-.bodyweight-unit { font-size: 13px; color: var(--text-dim); font-weight: 700; }
-.bodyweight-trend { font-size: 12.5px; color: var(--text-dim); margin-left: auto; }
-.bodyweight-trend.up { color: var(--warn); }
-.bodyweight-trend.down { color: var(--good); }
+.measure-field input { font-size: 17px; font-weight: 700; }
 
-/* --------------------------------------------------------------- SNAPSHOT */
-.snapshot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 9px;
-}
+.measure-submit-btn { width: 100%; margin-top: 12px; }
 
-.snapshot-pill {
+.measure-trend-block { margin-top: 10px; }
+.measure-trend { font-size: 12.5px; color: var(--text-dim); }
+.measure-trend.up { color: var(--warn); }
+.measure-trend.down { color: var(--good); }
+
+.measure-chart-block { margin-top: 18px; }
+.measure-chart-block h3 { margin: 0 0 8px; font-size: 12.5px; color: var(--accent-2); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ---------------------------------------------------------------- UP NEXT */
+.upnext-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--accent-2);
   background: var(--bg-alt);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 12.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-right: 8px;
+  vertical-align: middle;
 }
-
-.snapshot-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
-.snapshot-pill.done .dot { background: var(--good); box-shadow: 0 0 8px #34d17c80; }
-.snapshot-pill.done { border-color: #34d17c40; }
 
 /* -------------------------------------------------------- DIET / CHECKS */
 .diet-toggle {

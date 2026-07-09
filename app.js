@@ -221,6 +221,7 @@ function getOrCreateDayLog(dateKey) {
       supplementChecks: defaultSupplementChecks(),
       notes: "",
       bodyWeight: "",
+      waist: "",
     };
     settings.nextSplitDay = (splitDay % 7) + 1;
     saveSettings(settings);
@@ -333,14 +334,63 @@ function pct(r) {
   return r.total === 0 ? 0 : Math.round((r.done / r.total) * 100);
 }
 
-function findPreviousBodyWeight(excludeDateKey) {
+function findPreviousMeasure(field, excludeDateKey) {
   const logs = loadAllLogs();
   const keys = Object.keys(logs)
-    .filter((dk) => dk < excludeDateKey && parseFloat(logs[dk].bodyWeight) > 0)
+    .filter((dk) => dk < excludeDateKey && parseFloat(logs[dk][field]) > 0)
     .sort();
   if (!keys.length) return null;
   const dk = keys[keys.length - 1];
-  return { date: dk, weight: parseFloat(logs[dk].bodyWeight) };
+  return { date: dk, value: parseFloat(logs[dk][field]) };
+}
+
+function weekKey(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  return todayKey(d);
+}
+
+function weeklyAverages(field) {
+  const logs = loadAllLogs();
+  const buckets = {};
+  Object.keys(logs).forEach((dk) => {
+    const v = parseFloat(logs[dk][field]);
+    if (!(v > 0)) return;
+    const wk = weekKey(dk);
+    (buckets[wk] = buckets[wk] || []).push(v);
+  });
+  return Object.keys(buckets).sort().map((wk) => ({
+    date: wk,
+    value: buckets[wk].reduce((a, b) => a + b, 0) / buckets[wk].length,
+  }));
+}
+
+function buildLineChart(points, unit) {
+  if (points.length < 2) {
+    return `<p class="mini-note">Log this for a couple of weeks to see a trend line here.</p>`;
+  }
+  const values = points.map((p) => p.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const w = 100, h = 40, padY = 4;
+  const stepX = w / (points.length - 1);
+  const coords = points.map((p, i) => {
+    const x = i * stepX;
+    const y = padY + (h - 2 * padY) * (1 - (p.value - min) / range);
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+  const path = "M" + coords.join(" L");
+
+  return `
+    <svg class="weight-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+    </svg>
+    <div class="weight-chart-labels">
+      <span>${min.toFixed(1)}${unit}</span>
+      <span>Week of ${points[0].date} → ${points[points.length - 1].date}</span>
+      <span>${max.toFixed(1)}${unit}</span>
+    </div>`;
 }
 
 function computeStreak(logs) {
@@ -435,47 +485,110 @@ function renderToday(dateKey, log) {
   $("ringsRow").innerHTML = items.map(([label, r]) => buildRing(label, r)).join("");
 
   $("bodyWeightInput").value = log.bodyWeight || "";
-  const prevWeight = findPreviousBodyWeight(dateKey);
-  const trendEl = $("bodyWeightTrend");
-  const currentWeight = parseFloat(log.bodyWeight);
-  if (prevWeight && !isNaN(currentWeight) && currentWeight > 0) {
-    const diff = currentWeight - prevWeight.weight;
-    const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "▬";
-    trendEl.textContent = `${arrow} ${Math.abs(diff).toFixed(1)}kg since ${prevWeight.date}`;
-    trendEl.className = "bodyweight-trend" + (diff > 0 ? " up" : diff < 0 ? " down" : "");
-  } else if (prevWeight) {
-    trendEl.textContent = `Last logged: ${prevWeight.weight}kg (${prevWeight.date})`;
-    trendEl.className = "bodyweight-trend";
-  } else {
-    trendEl.textContent = "";
-    trendEl.className = "bodyweight-trend";
-  }
+  $("waistInput").value = log.waist || "";
 
-  const snapshotSections = [
-    ["Morning Drink", sumBool(log.dietChecks.morningDrink)],
-    ["Meal 1", sumBool(log.dietChecks.meal1)],
-    ["Meal 2", sumBool(log.dietChecks.meal2)],
-    ["Meal 3", sumBool(log.dietChecks.meal3)],
-    ["Meal 4", sumBool(log.dietChecks.meal4)],
-    ["Before Bed", sumBool(log.dietChecks.beforeBed)],
-    ["Cardio", { done: log.workoutChecks.cardio ? 1 : 0, total: 1 }],
-    ["Exercises", sumBool(log.workoutChecks.exercises)],
-    ["Supplements", supplementTotals(log)],
-  ];
-  if (entry.type === "training") {
-    snapshotSections.splice(4, 0,
-      ["Pre-Workout", sumBool(log.dietChecks.preWorkout)],
-      ["Intra-Workout", sumBool(log.dietChecks.intraWorkout)],
-      ["Post-Workout", sumBool(log.dietChecks.postWorkout)],
-    );
-  }
-  $("todaySnapshot").innerHTML = snapshotSections.map(([label, r]) => `
-    <div class="snapshot-pill ${r.total > 0 && r.done === r.total ? "done" : ""}">
-      <span class="dot"></span>${label} (${r.done}/${r.total})
-    </div>
-  `).join("");
+  const trendLine = (field, unit, label) => {
+    const prev = findPreviousMeasure(field, dateKey);
+    const current = parseFloat(log[field]);
+    if (prev && !isNaN(current) && current > 0) {
+      const diff = current - prev.value;
+      const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "▬";
+      const cls = diff > 0 ? "up" : diff < 0 ? "down" : "";
+      return `<div class="measure-trend ${cls}">${label}: ${arrow} ${Math.abs(diff).toFixed(1)}${unit} since ${prev.date}</div>`;
+    }
+    if (prev) return `<div class="measure-trend">${label}: last logged ${prev.value}${unit} (${prev.date})</div>`;
+    return "";
+  };
+  $("measureTrend").innerHTML = trendLine("bodyWeight", "kg", "Weight") + trendLine("waist", "cm", "Waist");
+
+  $("weightWeeklyChart").innerHTML = buildLineChart(weeklyAverages("bodyWeight"), "kg");
+  $("waistWeeklyChart").innerHTML = buildLineChart(weeklyAverages("waist"), "cm");
+
+  renderUpNext(log);
 
   $("dayNotes").value = log.notes || "";
+}
+
+/* -------------------------------------------------------------- up next */
+function getUpcomingItems(log) {
+  const entry = splitEntryFor(log.splitDay);
+  const training = entry.type === "training";
+  const type = log.dietChecks.dietType;
+  const items = [];
+
+  const addDiet = (key, itemsList) => {
+    (itemsList || []).forEach((it, i) => {
+      if (!log.dietChecks[key][i]) {
+        items.push({ label: itemText(it), tag: "Diet", kind: "diet", section: key, index: i });
+      }
+    });
+  };
+  const addSupps = (timing) => {
+    PLAN.supplements.forEach((s, i) => {
+      if (!s.timing.includes(timing)) return;
+      if (!(log.supplementChecks[i] || {})[timing]) {
+        items.push({ label: s.name, tag: "Supps", kind: "supp", index: i, timing });
+      }
+    });
+  };
+
+  addDiet("morningDrink", PLAN.diet.morningDrink.items);
+  addSupps("AM");
+  addDiet("meal1", PLAN.diet.meals[1][type]);
+  addSupps("Midday");
+  addDiet("meal2", PLAN.diet.meals[2][type]);
+
+  if (training) addDiet("preWorkout", PLAN.diet.training.preWorkout.items);
+  if (!log.workoutChecks.cardio) {
+    items.push({ label: `Cardio session — ${entry.cardio}`, tag: "Workout", kind: "workout-cardio" });
+  }
+  if (training) {
+    addDiet("intraWorkout", PLAN.diet.training.intraWorkout.items);
+    const workout = PLAN.workouts[entry.workout];
+    workout.exercises.forEach((ex, i) => {
+      if (!log.workoutChecks.exercises[i]) {
+        items.push({ label: ex.exercise, tag: "Workout", kind: "workout-exercise", index: i });
+      }
+    });
+    addDiet("postWorkout", PLAN.diet.training.postWorkout.items);
+    addSupps("Post-Workout");
+  }
+
+  addDiet("meal3", PLAN.diet.meals[3][type]);
+  addDiet("meal4", PLAN.diet.meals[4][type]);
+  addSupps("PM");
+  addDiet("beforeBed", PLAN.diet.beforeBed.items);
+  addSupps("Before Bed");
+
+  return items;
+}
+
+function upNextRowHtml(it) {
+  const attrs = {
+    diet: `data-kind="diet" data-section="${it.section}" data-index="${it.index}"`,
+    "workout-cardio": `data-kind="workout-cardio"`,
+    "workout-exercise": `data-kind="workout-exercise" data-index="${it.index}"`,
+    supp: `data-kind="supp" data-index="${it.index}" data-timing="${it.timing}"`,
+  }[it.kind];
+  return `
+    <label class="check-item">
+      <input type="checkbox" ${attrs} />
+      <span class="item-text"><span class="upnext-tag">${it.tag}</span>${it.label}</span>
+    </label>`;
+}
+
+function renderUpNext(log) {
+  const items = getUpcomingItems(log);
+  if (!items.length) {
+    $("upNextContent").innerHTML = `<p class="mini-note">🎉 Everything's checked off for today — nice work.</p>`;
+    return;
+  }
+  const shown = items.slice(0, 5);
+  let html = shown.map(upNextRowHtml).join("");
+  if (items.length > shown.length) {
+    html += `<p class="mini-note">+${items.length - shown.length} more remaining today</p>`;
+  }
+  $("upNextContent").innerHTML = html;
 }
 
 function checkItemHtml(text, checked, kind, section, index, note) {
@@ -1062,7 +1175,7 @@ function downloadBlob(content, filename, type) {
 function exportCsv() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort();
-  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
+  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (cm)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
   const rows = [header];
 
   dateKeys.forEach((dk) => {
@@ -1078,6 +1191,7 @@ function exportCsv() {
       entry.type,
       log.dietChecks.dietType,
       log.bodyWeight || "",
+      log.waist || "",
       pct(dTot),
       pct(wTot),
       pct(sTot),
@@ -1144,18 +1258,27 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDayLog(todayKey(), (log) => { log.notes = e.target.value; });
   });
 
-  // Body weight
-  $("bodyWeightInput").addEventListener("input", (e) => {
-    updateDayLog(todayKey(), (log) => { log.bodyWeight = e.target.value; });
-  });
-  $("bodyWeightInput").addEventListener("change", (e) => {
-    const val = parseFloat(e.target.value);
-    if (!isNaN(val) && (val < 20 || val > 400)) {
-      const clamped = String(Math.min(400, Math.max(20, val)));
-      e.target.value = clamped;
-      updateDayLog(todayKey(), (log) => { log.bodyWeight = clamped; });
-      showToast("Body weight adjusted to a realistic range (20–400kg)");
-    }
+  // Body measurements — explicit submit, not autosave
+  $("measureSubmitBtn").addEventListener("click", () => {
+    const weightEl = $("bodyWeightInput");
+    const waistEl = $("waistInput");
+    const weightVal = parseFloat(weightEl.value);
+    const waistVal = parseFloat(waistEl.value);
+
+    if (weightEl.value && isNaN(weightVal)) { showToast("Enter a valid body weight"); return; }
+    if (waistEl.value && isNaN(waistVal)) { showToast("Enter a valid waist size"); return; }
+    if (!weightEl.value && !waistEl.value) { showToast("Enter a weight or waist value first"); return; }
+
+    const clampedWeight = isNaN(weightVal) ? "" : String(Math.min(400, Math.max(20, weightVal)));
+    const clampedWaist = isNaN(waistVal) ? "" : String(Math.min(200, Math.max(40, waistVal)));
+    weightEl.value = clampedWeight;
+    waistEl.value = clampedWaist;
+
+    updateDayLog(todayKey(), (log) => {
+      if (clampedWeight) log.bodyWeight = clampedWeight;
+      if (clampedWaist) log.waist = clampedWaist;
+    });
+    showToast("Measurements saved");
     renderAll();
   });
 
@@ -1191,7 +1314,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Checkbox delegation for diet / workout / supplements
-  ["dietContent", "workoutContent", "supplementsContent"].forEach((id) => {
+  ["dietContent", "workoutContent", "supplementsContent", "upNextContent"].forEach((id) => {
     $(id).addEventListener("change", (e) => {
       const t = e.target;
       if (t.tagName !== "INPUT") return;
