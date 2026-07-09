@@ -499,96 +499,30 @@ function renderToday(dateKey, log) {
     if (prev) return `<div class="measure-trend">${label}: last logged ${prev.value}${unit} (${prev.date})</div>`;
     return "";
   };
-  $("measureTrend").innerHTML = trendLine("bodyWeight", "kg", "Weight") + trendLine("waist", "cm", "Waist");
+  $("measureTrend").innerHTML = trendLine("bodyWeight", "kg", "Weight") + trendLine("waist", "in", "Waist");
 
-  $("weightWeeklyChart").innerHTML = buildLineChart(weeklyAverages("bodyWeight"), "kg");
-  $("waistWeeklyChart").innerHTML = buildLineChart(weeklyAverages("waist"), "cm");
-
-  renderUpNext(log);
+  renderMeasureCharts();
+  renderHeatmap();
+  renderWeightChart();
 
   $("dayNotes").value = log.notes || "";
 }
 
-/* -------------------------------------------------------------- up next */
-function getUpcomingItems(log) {
-  const entry = splitEntryFor(log.splitDay);
-  const training = entry.type === "training";
-  const type = log.dietChecks.dietType;
-  const items = [];
+let measureRange = "weekly";
 
-  const addDiet = (key, itemsList) => {
-    (itemsList || []).forEach((it, i) => {
-      if (!log.dietChecks[key][i]) {
-        items.push({ label: itemText(it), tag: "Diet", kind: "diet", section: key, index: i });
-      }
-    });
-  };
-  const addSupps = (timing) => {
-    PLAN.supplements.forEach((s, i) => {
-      if (!s.timing.includes(timing)) return;
-      if (!(log.supplementChecks[i] || {})[timing]) {
-        items.push({ label: s.name, tag: "Supps", kind: "supp", index: i, timing });
-      }
-    });
-  };
-
-  addDiet("morningDrink", PLAN.diet.morningDrink.items);
-  addSupps("AM");
-  addDiet("meal1", PLAN.diet.meals[1][type]);
-  addSupps("Midday");
-  addDiet("meal2", PLAN.diet.meals[2][type]);
-
-  if (training) addDiet("preWorkout", PLAN.diet.training.preWorkout.items);
-  if (!log.workoutChecks.cardio) {
-    items.push({ label: `Cardio session — ${entry.cardio}`, tag: "Workout", kind: "workout-cardio" });
-  }
-  if (training) {
-    addDiet("intraWorkout", PLAN.diet.training.intraWorkout.items);
-    const workout = PLAN.workouts[entry.workout];
-    workout.exercises.forEach((ex, i) => {
-      if (!log.workoutChecks.exercises[i]) {
-        items.push({ label: ex.exercise, tag: "Workout", kind: "workout-exercise", index: i });
-      }
-    });
-    addDiet("postWorkout", PLAN.diet.training.postWorkout.items);
-    addSupps("Post-Workout");
-  }
-
-  addDiet("meal3", PLAN.diet.meals[3][type]);
-  addDiet("meal4", PLAN.diet.meals[4][type]);
-  addSupps("PM");
-  addDiet("beforeBed", PLAN.diet.beforeBed.items);
-  addSupps("Before Bed");
-
-  return items;
+function monthlyFromWeekly(weeklyPoints) {
+  const byMonth = {};
+  weeklyPoints.forEach((p) => { byMonth[p.date.slice(0, 7)] = p; });
+  return Object.keys(byMonth).sort().map((m) => ({ date: m, value: byMonth[m].value }));
 }
 
-function upNextRowHtml(it) {
-  const attrs = {
-    diet: `data-kind="diet" data-section="${it.section}" data-index="${it.index}"`,
-    "workout-cardio": `data-kind="workout-cardio"`,
-    "workout-exercise": `data-kind="workout-exercise" data-index="${it.index}"`,
-    supp: `data-kind="supp" data-index="${it.index}" data-timing="${it.timing}"`,
-  }[it.kind];
-  return `
-    <label class="check-item">
-      <input type="checkbox" ${attrs} />
-      <span class="item-text"><span class="upnext-tag">${it.tag}</span>${it.label}</span>
-    </label>`;
-}
-
-function renderUpNext(log) {
-  const items = getUpcomingItems(log);
-  if (!items.length) {
-    $("upNextContent").innerHTML = `<p class="mini-note">🎉 Everything's checked off for today — nice work.</p>`;
-    return;
-  }
-  const shown = items.slice(0, 5);
-  let html = shown.map(upNextRowHtml).join("");
-  if (items.length > shown.length) {
-    html += `<p class="mini-note">+${items.length - shown.length} more remaining today</p>`;
-  }
-  $("upNextContent").innerHTML = html;
+function renderMeasureCharts() {
+  const weightWeekly = weeklyAverages("bodyWeight");
+  const waistWeekly = weeklyAverages("waist");
+  const weightPoints = measureRange === "monthly" ? monthlyFromWeekly(weightWeekly) : weightWeekly;
+  const waistPoints = measureRange === "monthly" ? monthlyFromWeekly(waistWeekly) : waistWeekly;
+  $("weightWeeklyChart").innerHTML = buildLineChart(weightPoints, "kg");
+  $("waistWeeklyChart").innerHTML = buildLineChart(waistPoints, "in");
 }
 
 function checkItemHtml(text, checked, kind, section, index, note) {
@@ -1175,7 +1109,7 @@ function downloadBlob(content, filename, type) {
 function exportCsv() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort();
-  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (cm)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
+  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (in)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
   const rows = [header];
 
   dateKeys.forEach((dk) => {
@@ -1213,15 +1147,35 @@ function exportJson() {
   showToast("Backup downloaded");
 }
 
+function mergeLogsPreservingExisting(existing, incoming) {
+  const merged = { ...existing };
+  Object.keys(incoming).forEach((dk) => {
+    const cur = merged[dk];
+    if (cur) {
+      // A real tracked day already exists for this date — never let an import
+      // clobber its checklists/notes. Only backfill weight/waist, and only if
+      // this device doesn't already have a value for them.
+      merged[dk] = {
+        ...cur,
+        bodyWeight: cur.bodyWeight || incoming[dk].bodyWeight || "",
+        waist: cur.waist || incoming[dk].waist || "",
+      };
+    } else {
+      merged[dk] = incoming[dk];
+    }
+  });
+  return merged;
+}
+
 function importJson(file) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
       if (!data.logs) throw new Error("Invalid file");
-      saveAllLogs(data.logs);
+      saveAllLogs(mergeLogsPreservingExisting(loadAllLogs(), data.logs));
       if (data.settings) saveSettings(data.settings);
-      showToast("Backup restored");
+      showToast("Backup merged in");
       renderAll();
     } catch (e) {
       alert("Could not restore this file — it doesn't look like a valid Beyond Fitness backup.");
@@ -1270,7 +1224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!weightEl.value && !waistEl.value) { showToast("Enter a weight or waist value first"); return; }
 
     const clampedWeight = isNaN(weightVal) ? "" : String(Math.min(400, Math.max(20, weightVal)));
-    const clampedWaist = isNaN(waistVal) ? "" : String(Math.min(200, Math.max(40, waistVal)));
+    const clampedWaist = isNaN(waistVal) ? "" : String(Math.min(80, Math.max(15, waistVal)));
     weightEl.value = clampedWeight;
     waistEl.value = clampedWaist;
 
@@ -1280,6 +1234,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     showToast("Measurements saved");
     renderAll();
+  });
+
+  $("measureRangeToggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-range]");
+    if (!btn) return;
+    measureRange = btn.dataset.range;
+    document.querySelectorAll("#measureRangeToggle button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderMeasureCharts();
   });
 
   // Diet type toggle (event delegation on diet content)

@@ -67,26 +67,38 @@
           <input type="number" id="bodyWeightInput" step="0.1" min="20" max="400" inputmode="decimal" placeholder="e.g. 78.5" />
         </div>
         <div class="measure-field">
-          <label for="waistInput">Waist (cm)</label>
-          <input type="number" id="waistInput" step="0.1" min="40" max="200" inputmode="decimal" placeholder="e.g. 85" />
+          <label for="waistInput">Waist (inch)</label>
+          <input type="number" id="waistInput" step="0.1" min="15" max="80" inputmode="decimal" placeholder="e.g. 35" />
         </div>
       </div>
       <button class="btn btn-primary measure-submit-btn" id="measureSubmitBtn">Submit</button>
       <div id="measureTrend" class="measure-trend-block"></div>
 
+      <div class="measure-chart-head">
+        <span>Trend</span>
+        <div class="measure-toggle" id="measureRangeToggle">
+          <button class="active" data-range="weekly">Weekly</button>
+          <button data-range="monthly">Monthly</button>
+        </div>
+      </div>
       <div class="measure-chart-block">
-        <h3>Weekly Body Weight</h3>
+        <h3>Body Weight</h3>
         <div id="weightWeeklyChart"></div>
       </div>
       <div class="measure-chart-block">
-        <h3>Weekly Waist</h3>
+        <h3>Waist</h3>
         <div id="waistWeeklyChart"></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Up Next</h2>
-      <div id="upNextContent"></div>
+      <h2>Consistency</h2>
+      <div id="heatmapWrap" class="heatmap-wrap"></div>
+    </div>
+
+    <div class="card">
+      <h2>Body Weight Trend</h2>
+      <div id="weightChartWrap" class="weight-chart-wrap"></div>
     </div>
 
     <div class="card">
@@ -112,16 +124,6 @@
 
   <!-- HISTORY / PROGRESS -->
   <section class="tab-panel" id="panel-history">
-    <div class="card">
-      <h2>Consistency</h2>
-      <div id="heatmapWrap" class="heatmap-wrap"></div>
-    </div>
-
-    <div class="card">
-      <h2>Body Weight Trend</h2>
-      <div id="weightChartWrap" class="weight-chart-wrap"></div>
-    </div>
-
     <div class="card">
       <div class="history-header">
         <h2>Daily Log History</h2>

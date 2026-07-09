@@ -1,4 +1,4 @@
-const CACHE_NAME = "viper-tracker-v14";
+const CACHE_NAME = "viper-tracker-v15";
 const ASSETS = [
   "./",
   "./index.html",
