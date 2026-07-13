@@ -61,17 +61,36 @@ document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
 /* ------------------------------------------------------------- splash */
 (function hideSplashOnLoad() {
+  const splash = document.getElementById("splashScreen");
+  const video = document.getElementById("splashVideo");
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const minDisplay = reduceMotion ? 80 : 750;
+  let dismissed = false;
+
   const dismiss = () => {
-    const splash = document.getElementById("splashScreen");
-    if (!splash) return;
+    if (dismissed || !splash) return;
+    dismissed = true;
     splash.classList.add("hide");
     setTimeout(() => splash.remove(), 420);
   };
-  window.addEventListener("load", () => setTimeout(dismiss, minDisplay));
-  // Fallback in case the load event is delayed by a slow network
-  setTimeout(dismiss, 2500);
+
+  if (reduceMotion || !video) {
+    setTimeout(dismiss, 80);
+    return;
+  }
+
+  video.addEventListener("ended", dismiss);
+  video.addEventListener("error", dismiss);
+
+  // Try with sound first; browsers that block autoplay-with-sound will
+  // reject the play() promise, so fall back to a muted (still visual) play.
+  video.muted = false;
+  video.play().catch(() => {
+    video.muted = true;
+    video.play().catch(dismiss);
+  });
+
+  // Safety net in case the video never fires ended/error (slow network, etc.)
+  setTimeout(dismiss, 8000);
 })();
 
 /* ------------------------------------------------------- install prompt */
