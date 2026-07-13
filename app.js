@@ -196,7 +196,12 @@ function defaultWorkoutChecks(entry) {
     cardio: false,
     exercises: exercises.map(() => false),
     logs: exercises.map(() => ({ weight: "", reps: "" })),
+    missed: false,
   };
+}
+
+function nextSplitDayFor(splitDay, missed) {
+  return missed ? Number(splitDay) : (Number(splitDay) % 7) + 1;
 }
 
 function defaultSupplementChecks() {
@@ -223,11 +228,29 @@ function getOrCreateDayLog(dateKey) {
       bodyWeight: "",
       waist: "",
     };
-    settings.nextSplitDay = (splitDay % 7) + 1;
+    settings.nextSplitDay = nextSplitDayFor(splitDay, false);
     saveSettings(settings);
     saveAllLogs(logs);
   }
   return logs[dateKey];
+}
+
+function toggleWorkoutMissed(dateKey) {
+  const logs = loadAllLogs();
+  const log = logs[dateKey];
+  if (!log) return;
+  log.workoutChecks.missed = !log.workoutChecks.missed;
+  logs[dateKey] = log;
+  saveAllLogs(logs);
+
+  const settings = loadSettings();
+  settings.nextSplitDay = nextSplitDayFor(log.splitDay, log.workoutChecks.missed);
+  saveSettings(settings);
+
+  showToast(log.workoutChecks.missed
+    ? "Marked as missed — tomorrow will repeat this workout"
+    : "Missed mark undone — tomorrow advances as normal");
+  renderAll();
 }
 
 function updateDayLog(dateKey, mutator) {
@@ -265,7 +288,7 @@ function changeSplitDay(dateKey, newDay) {
   saveAllLogs(logs);
 
   const settings = loadSettings();
-  settings.nextSplitDay = (Number(newDay) % 7) + 1;
+  settings.nextSplitDay = nextSplitDayFor(newDay, false);
   saveSettings(settings);
 
   showToast(`Switched to Day ${newDay} — ${entry.label}`);
@@ -941,6 +964,14 @@ function renderWorkout(dateKey, log) {
       <input type="checkbox" data-kind="workout-cardio" ${log.workoutChecks.cardio ? "checked" : ""} />
       <span class="item-text">Completed ${entry.type === "training" ? "cardio" : "cardio + abs"} session</span>
     </label>
+    ${entry.type === "training" ? (
+      log.workoutChecks.missed
+        ? `<div class="missed-banner">
+             <span>⚠ Marked as missed — tomorrow will repeat ${entry.label}</span>
+             <button class="btn btn-secondary missed-toggle-btn" data-action="toggle-missed">Undo</button>
+           </div>`
+        : `<button class="btn btn-secondary missed-toggle-btn" data-action="toggle-missed">Mark Workout as Missed</button>`
+    ) : ""}
   </div>`;
 
   if (entry.type === "training") {
@@ -1036,11 +1067,13 @@ function renderHeatmap() {
     const dk = todayKey(cursor);
     const log = logs[dk];
     let p = null;
+    let missed = false;
     if (log) {
       const dTot = dietTotals(log), wTot = workoutTotals(log), sTot = supplementTotals(log);
       p = pct({ done: dTot.done + wTot.done + sTot.done, total: dTot.total + wTot.total + sTot.total });
+      missed = !!log.workoutChecks.missed;
     }
-    cells.push({ date: dk, pct: p });
+    cells.push({ date: dk, pct: p, missed });
     cursor.setDate(cursor.getDate() + 1);
   }
 
@@ -1055,7 +1088,7 @@ function renderHeatmap() {
 
   $("heatmapWrap").innerHTML = `
     <div class="heatmap-grid">
-      ${cells.map((c) => `<div class="heatmap-cell level-${levelFor(c.pct)}" title="${c.date}${c.pct !== null ? `: ${c.pct}%` : ": no log"}"></div>`).join("")}
+      ${cells.map((c) => `<div class="heatmap-cell ${c.missed ? "level-missed" : "level-" + levelFor(c.pct)}" title="${c.date}${c.missed ? ": workout missed" : c.pct !== null ? `: ${c.pct}%` : ": no log"}"></div>`).join("")}
     </div>
     <div class="heatmap-legend">
       <span>Less</span>
@@ -1078,7 +1111,7 @@ function renderHistory() {
       <div class="history-card-top">
         <div>
           <div class="history-date">${dk}</div>
-          <div class="history-day">Day ${log.splitDay} — ${entry.label}</div>
+          <div class="history-day">Day ${log.splitDay} — ${entry.label}${log.workoutChecks.missed ? ` <span class="history-missed-badge">Missed</span>` : ""}</div>
         </div>
         <button class="link-btn" data-delete-date="${dk}" aria-label="Delete log for ${dk}">✕</button>
       </div>
@@ -1114,7 +1147,7 @@ function downloadBlob(content, filename, type) {
 function exportCsv() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort();
-  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (in)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Notes"];
+  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (in)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Workout Missed", "Notes"];
   const rows = [header];
 
   dateKeys.forEach((dk) => {
@@ -1137,6 +1170,7 @@ function exportCsv() {
       overall,
       log.workoutChecks.cardio ? "Yes" : "No",
       `${exTot.done}/${exTot.total}`,
+      log.workoutChecks.missed ? "Yes" : "No",
       log.notes || "",
     ]);
   });
@@ -1292,6 +1326,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const scrollY = window.scrollY;
     renderAll();
     window.scrollTo(0, scrollY);
+  });
+
+  // Mark workout as missed / undo
+  $("workoutContent").addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="toggle-missed"]');
+    if (!btn) return;
+    toggleWorkoutMissed(todayKey());
   });
 
   // Checkbox delegation for diet / workout / supplements
