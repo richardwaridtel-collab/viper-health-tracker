@@ -34,7 +34,7 @@ const PLAN = {
         A: [
           { text: "Whole egg x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
           { text: "Oats 35g", kcal: 133, protein: 4.7, carbs: 23.5, fat: 2.3 },
-          { text: "Whey 1 scoop", kcal: 120, protein: 24, carbs: 3, fat: 1.5 },
+          { text: "Whey 1 scoop", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
           { text: "Banana 1", kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
         ],
         B: [
@@ -63,11 +63,13 @@ const PLAN = {
           { text: "170g chicken breast (cooked weight)", kcal: 280, protein: 52.7, carbs: 0, fat: 6.1 },
           { text: "Extra virgin olive oil — 1 tbsp", kcal: 124, protein: 0, carbs: 0, fat: 14 },
           { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
+          { text: "Protein shake (optional)", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
         ],
         B: [
           { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
           { text: "Veg 100g", kcal: 28, protein: 2, carbs: 5.6, fat: 0.2 },
           { text: "1 tbsp olive oil on top", kcal: 124, protein: 0, carbs: 0, fat: 14 },
+          { text: "Protein shake (optional)", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
         ],
         note: "You can mash potato with olive oil (not counted in calories above)",
       },
@@ -111,7 +113,7 @@ const PLAN = {
         title: "Post-Workout Shake",
         subtitle: "Training days only",
         items: [
-          { text: "1 scoop whey", kcal: 120, protein: 24, carbs: 3, fat: 1.5 },
+          { text: "1 scoop whey", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
           { text: "Banana 60g", kcal: 52, protein: 0.65, carbs: 13.5, fat: 0.2 },
         ],
       },

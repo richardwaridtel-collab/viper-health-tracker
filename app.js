@@ -539,6 +539,14 @@ function renderAll() {
   $("disclaimerText").textContent = PLAN.coach.disclaimer;
   $("coachLine").textContent = `Coach ${PLAN.coach.name} — ${PLAN.coach.title} — ${PLAN.coach.email}`;
 
+  const productSelect = $("proteinProductSelect");
+  if (productSelect.options.length === 0) {
+    productSelect.innerHTML = Object.keys(PROTEIN_PRODUCTS)
+      .map((key) => `<option value="${key}">${PROTEIN_PRODUCTS[key].label}</option>`)
+      .join("");
+  }
+  productSelect.value = currentProteinProductKey();
+
   renderToday(dateKey, log);
   renderDiet(dateKey, log);
   renderWorkout(dateKey, log);
@@ -621,16 +629,67 @@ function checkItemHtml(text, checked, kind, section, index, note) {
     </label>`;
 }
 
+const PROTEIN_PRODUCTS = {
+  generic: {
+    label: "Generic / Any Brand",
+    servingLabel: "",
+    kcal: 120, protein: 24, carbs: 3, fat: 1.5,
+  },
+  revolution: {
+    label: "Revolution Nutrition ISO Whey — Chocolate Cake (1 scoop)",
+    servingLabel: "Revolution ISO Whey, Chocolate Cake",
+    kcal: 134, protein: 28, carbs: 2, fat: 1,
+  },
+  premier: {
+    label: "Premier Protein — Chocolate Shake (325mL)",
+    servingLabel: "Premier Protein Shake, Chocolate",
+    kcal: 160, protein: 30, carbs: 4, fat: 3,
+  },
+};
+
+function currentProteinProductKey() {
+  return loadSettings().proteinProduct || "generic";
+}
+
+function currentProteinProduct() {
+  return PROTEIN_PRODUCTS[currentProteinProductKey()] || PROTEIN_PRODUCTS.generic;
+}
+
+function setProteinProduct(key) {
+  const settings = loadSettings();
+  settings.proteinProduct = key;
+  saveSettings(settings);
+}
+
+function resolveItemNutrition(it) {
+  if (typeof it === "string") return null;
+  if (it.wheyScoop) {
+    const p = currentProteinProduct();
+    return { kcal: p.kcal, protein: p.protein, carbs: p.carbs, fat: p.fat };
+  }
+  return it;
+}
+
 function itemText(it) {
-  return typeof it === "string" ? it : it.text;
+  if (typeof it === "string") return it;
+  if (it.wheyScoop) {
+    const p = currentProteinProduct();
+    return p.servingLabel ? `${it.text} — ${p.servingLabel}` : it.text;
+  }
+  return it.text;
 }
 
 function itemKcalNote(it) {
-  return typeof it === "string" ? "" : `${Math.round(it.kcal)} kcal`;
+  if (typeof it === "string") return "";
+  const n = resolveItemNutrition(it);
+  return `${Math.round(n.kcal)} kcal`;
 }
 
 function sectionKcal(items) {
-  return items.reduce((sum, it) => sum + (typeof it === "string" ? 0 : it.kcal || 0), 0);
+  return items.reduce((sum, it) => {
+    const n = resolveItemNutrition(it);
+    return sum + (n ? n.kcal : 0);
+  }, 0);
 }
 
 function checkedItemsHtml(items, checks, key) {
@@ -647,10 +706,11 @@ function computeDietMacros(log) {
   const sumSection = (items, checks) => {
     (items || []).forEach((it, i) => {
       if (!checks || !checks[i] || typeof it === "string") return;
-      kcal += it.kcal || 0;
-      protein += it.protein || 0;
-      carbs += it.carbs || 0;
-      fat += it.fat || 0;
+      const n = resolveItemNutrition(it);
+      kcal += n.kcal || 0;
+      protein += n.protein || 0;
+      carbs += n.carbs || 0;
+      fat += n.fat || 0;
     });
   };
 
@@ -1414,6 +1474,11 @@ document.addEventListener("DOMContentLoaded", () => {
   $("settingsBackdrop").addEventListener("click", closeSettings);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$("settingsModal").hidden) closeSettings();
+  });
+  $("proteinProductSelect").addEventListener("change", (e) => {
+    setProteinProduct(e.target.value);
+    showToast(`Protein product set to ${PROTEIN_PRODUCTS[e.target.value].label}`);
+    renderAll();
   });
   $("settingsResetToday").addEventListener("click", () => {
     resetToday(todayKey());
