@@ -1,4 +1,4 @@
-const CACHE_NAME = "viper-tracker-v21";
+const CACHE_NAME = "viper-tracker-v22";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
+  "./video/splash.mp4",
 ];
 
 self.addEventListener("install", (event) => {

@@ -63,6 +63,7 @@ document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 (function hideSplashOnLoad() {
   const splash = document.getElementById("splashScreen");
   const video = document.getElementById("splashVideo");
+  const videoBg = document.getElementById("splashVideoBg");
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let dismissed = false;
 
@@ -80,6 +81,9 @@ document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
   video.addEventListener("ended", dismiss);
   video.addEventListener("error", dismiss);
+
+  // Blurred backdrop copy is purely decorative — always muted, failures ignored.
+  if (videoBg) videoBg.play().catch(() => {});
 
   // Try with sound first; browsers that block autoplay-with-sound will
   // reject the play() promise, so fall back to a muted (still visual) play.
