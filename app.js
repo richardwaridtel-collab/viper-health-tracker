@@ -198,14 +198,20 @@ function saveSettings(settings) {
 }
 
 /* -------------------------------------------------------- default shapes */
-function defaultDietChecks(dietType, training) {
+function mealItems(n, optionIndex) {
+  return PLAN.diet.meals[n].options[optionIndex || 0].items;
+}
+
+function defaultDietChecks(training) {
+  const mealOption = { meal1: 0, meal2: 0, meal3: 0, meal4: 0 };
   return {
-    dietType,
+    mealOption,
     morningDrink: PLAN.diet.morningDrink.items.map(() => false),
-    meal1: PLAN.diet.meals[1][dietType].map(() => false),
-    meal2: PLAN.diet.meals[2][dietType].map(() => false),
-    meal3: PLAN.diet.meals[3][dietType].map(() => false),
-    meal4: PLAN.diet.meals[4][dietType].map(() => false),
+    meal1: mealItems(1, mealOption.meal1).map(() => false),
+    meal2: mealItems(2, mealOption.meal2).map(() => false),
+    meal3: mealItems(3, mealOption.meal3).map(() => false),
+    meal4: mealItems(4, mealOption.meal4).map(() => false),
+    comfortFood: PLAN.diet.comfortFood.items.map(() => false),
     preWorkout: training ? PLAN.diet.training.preWorkout.items.map(() => false) : [],
     intraWorkout: training ? PLAN.diet.training.intraWorkout.items.map(() => false) : [],
     postWorkout: training ? PLAN.diet.training.postWorkout.items.map(() => false) : [],
@@ -235,6 +241,10 @@ function defaultSupplementChecks() {
   });
 }
 
+function defaultPedChecks() {
+  return PLAN.peds.items.map(() => false);
+}
+
 /* ------------------------------------------------------------- day logic */
 function getOrCreateDayLog(dateKey) {
   const logs = loadAllLogs();
@@ -244,9 +254,10 @@ function getOrCreateDayLog(dateKey) {
     const entry = splitEntryFor(splitDay);
     logs[dateKey] = {
       splitDay,
-      dietChecks: defaultDietChecks(entry.type === "training" ? "A" : "B", entry.type === "training"),
+      dietChecks: defaultDietChecks(entry.type === "training"),
       workoutChecks: defaultWorkoutChecks(entry),
       supplementChecks: defaultSupplementChecks(),
+      pedChecks: defaultPedChecks(),
       notes: "",
       bodyWeight: "",
       waist: "",
@@ -287,7 +298,7 @@ function updateDayLog(dateKey, mutator) {
 
 function hasAnyProgress(log) {
   const d = log.dietChecks;
-  const dietFlag = ["morningDrink", "meal1", "meal2", "meal3", "meal4", "preWorkout", "intraWorkout", "postWorkout", "beforeBed"]
+  const dietFlag = ["morningDrink", "meal1", "meal2", "meal3", "meal4", "comfortFood", "preWorkout", "intraWorkout", "postWorkout", "beforeBed"]
     .some((k) => (d[k] || []).some(Boolean));
   const workoutFlag = log.workoutChecks.cardio || log.workoutChecks.exercises.some(Boolean);
   return dietFlag || workoutFlag;
@@ -305,7 +316,7 @@ function changeSplitDay(dateKey, newDay) {
   }
   const entry = splitEntryFor(newDay);
   log.splitDay = Number(newDay);
-  log.dietChecks = defaultDietChecks(entry.type === "training" ? "A" : "B", entry.type === "training");
+  log.dietChecks = defaultDietChecks(entry.type === "training");
   log.workoutChecks = defaultWorkoutChecks(entry);
   logs[dateKey] = log;
   saveAllLogs(logs);
@@ -318,14 +329,14 @@ function changeSplitDay(dateKey, newDay) {
   renderAll();
 }
 
-function changeDietType(dateKey, newType) {
+function changeMealOption(dateKey, mealNum, optionIndex) {
   const logs = loadAllLogs();
   const log = logs[dateKey];
-  const training = isTrainingDay(log.splitDay);
-  log.dietChecks = defaultDietChecks(newType, training);
+  log.dietChecks.mealOption["meal" + mealNum] = optionIndex;
+  log.dietChecks["meal" + mealNum] = mealItems(mealNum, optionIndex).map(() => false);
   logs[dateKey] = log;
   saveAllLogs(logs);
-  showToast(`Switched to Diet ${newType} — checklist reset for today`);
+  showToast(`Meal ${mealNum} switched to Option ${optionIndex + 1} — checklist reset for that meal`);
   renderAll();
 }
 
@@ -335,9 +346,10 @@ function resetToday(dateKey) {
   const logs = loadAllLogs();
   const log = logs[dateKey];
   const entry = splitEntryFor(log.splitDay);
-  log.dietChecks = defaultDietChecks(log.dietChecks.dietType, entry.type === "training");
+  log.dietChecks = defaultDietChecks(entry.type === "training");
   log.workoutChecks = defaultWorkoutChecks(entry);
   log.supplementChecks = defaultSupplementChecks();
+  log.pedChecks = defaultPedChecks();
   logs[dateKey] = log;
   saveAllLogs(logs);
   showToast("Today's checklists were reset");
@@ -357,8 +369,10 @@ function dietTotals(log) {
 }
 
 function workoutTotals(log) {
-  let done = (log.workoutChecks.cardio ? 1 : 0);
-  let total = 1;
+  const entry = splitEntryFor(log.splitDay);
+  const trackCardio = !!entry.cardio;
+  let done = trackCardio && log.workoutChecks.cardio ? 1 : 0;
+  let total = trackCardio ? 1 : 0;
   const r = sumBool(log.workoutChecks.exercises);
   done += r.done;
   total += r.total;
@@ -698,7 +712,6 @@ function checkedItemsHtml(items, checks, key) {
 
 /* ------------------------------------------------------------- macro pie */
 function computeDietMacros(log) {
-  const type = log.dietChecks.dietType;
   const entry = splitEntryFor(log.splitDay);
   const training = entry.type === "training";
   let kcal = 0, protein = 0, carbs = 0, fat = 0;
@@ -714,7 +727,8 @@ function computeDietMacros(log) {
     });
   };
 
-  [1, 2, 3, 4].forEach((n) => sumSection(PLAN.diet.meals[n][type], log.dietChecks["meal" + n]));
+  [1, 2, 3, 4].forEach((n) => sumSection(mealItems(n, log.dietChecks.mealOption["meal" + n]), log.dietChecks["meal" + n]));
+  sumSection(PLAN.diet.comfortFood.items, log.dietChecks.comfortFood);
   if (training) {
     sumSection(PLAN.diet.training.preWorkout.items, log.dietChecks.preWorkout);
     sumSection(PLAN.diet.training.intraWorkout.items, log.dietChecks.intraWorkout);
@@ -779,17 +793,12 @@ function buildMacroPie(macros) {
 
 function renderDiet(dateKey, log) {
   const entry = splitEntryFor(log.splitDay);
-  const type = log.dietChecks.dietType;
   const training = entry.type === "training";
 
   let html = "";
 
   html += `<div class="card">
-    <div class="diet-toggle">
-      <button data-diet-type="A" class="${type === "A" ? "active" : ""}">Diet A — Training Day</button>
-      <button data-diet-type="B" class="${type === "B" ? "active" : ""}">Diet B — Rest Day</button>
-    </div>
-    <p class="mini-note">Today is <strong>Day ${log.splitDay} — ${entry.label}</strong> (${entry.type === "training" ? "training" : "rest"} day). Diet is auto-matched to your split, but you can override above. ${PLAN.diet.note}</p>
+    <p class="mini-note">Today is <strong>Day ${log.splitDay} — ${entry.label}</strong> (${entry.type === "training" ? "training" : "rest"} day). ${PLAN.diet.note}</p>
   </div>`;
 
   const macros = computeDietMacros(log);
@@ -808,13 +817,18 @@ function renderDiet(dateKey, log) {
 
   const renderMeal = (n) => {
     const meal = PLAN.diet.meals[n];
-    const items = meal[type];
+    const optionIndex = (log.dietChecks.mealOption && log.dietChecks.mealOption["meal" + n]) || 0;
+    const option = meal.options[optionIndex];
+    const items = option.items;
     html += `<div class="card meal-block">
       <div class="meal-title-row">
         <div class="meal-title">${meal.name}</div>
         <div class="meal-kcal">${sectionKcal(items)} kcal</div>
       </div>
       ${meal.subtitle ? `<div class="meal-subtitle">${meal.subtitle}</div>` : ""}
+      <div class="diet-toggle meal-option-toggle">
+        ${meal.options.map((opt, i) => `<button data-meal-num="${n}" data-option-index="${i}" class="${i === optionIndex ? "active" : ""}">${opt.label}</button>`).join("")}
+      </div>
       ${checkedItemsHtml(items, log.dietChecks["meal" + n], "meal" + n)}
       ${meal.note ? `<p class="mini-note">${meal.note}</p>` : ""}
     </div>`;
@@ -840,6 +854,12 @@ function renderDiet(dateKey, log) {
   }
 
   renderMeal(4);
+
+  html += `<div class="card">
+    <h2>${PLAN.diet.comfortFood.title}</h2>
+    <p class="mini-note">${PLAN.diet.comfortFood.subtitle}</p>
+    ${checkedItemsHtml(PLAN.diet.comfortFood.items, log.dietChecks.comfortFood || [], "comfortFood")}
+  </div>`;
 
   html += `<div class="card">
     <h2>${PLAN.diet.beforeBed.title}</h2>
@@ -1040,13 +1060,13 @@ function renderWorkout(dateKey, log) {
     <div class="workout-day-card">
       <div>
         <div class="day-name">Day ${entry.day} — ${entry.label}</div>
-        <div class="day-meta">${entry.cardio}</div>
+        ${entry.cardio ? `<div class="day-meta">${entry.cardio}</div>` : ""}
       </div>
     </div>
-    <label class="check-item ${log.workoutChecks.cardio ? "checked" : ""}" style="margin-top:8px">
+    ${entry.cardio ? `<label class="check-item ${log.workoutChecks.cardio ? "checked" : ""}" style="margin-top:8px">
       <input type="checkbox" data-kind="workout-cardio" ${log.workoutChecks.cardio ? "checked" : ""} />
-      <span class="item-text">Completed ${entry.type === "training" ? "cardio" : "cardio + abs"} session</span>
-    </label>
+      <span class="item-text">Completed cardio session</span>
+    </label>` : ""}
     ${entry.type === "training" ? (
       log.workoutChecks.missed
         ? `<div class="missed-banner">
@@ -1091,7 +1111,7 @@ function renderWorkout(dateKey, log) {
     });
     html += `</div>`;
   } else {
-    html += `<div class="card"><p class="mini-note">Rest day — no lifting scheduled. Keep to light abs work and your cardio session.</p></div>`;
+    html += `<div class="card"><p class="mini-note">Rest day — nothing scheduled. Full recovery day.</p></div>`;
   }
 
   $("workoutContent").innerHTML = html;
@@ -1132,6 +1152,25 @@ function renderSupplements(dateKey, log) {
       }).join("")}
     </div>`;
   });
+
+  const pedChecks = log.pedChecks || [];
+  const pedDone = pedChecks.filter(Boolean).length;
+  html += `<div class="card ped-card">
+    <div class="meal-title-row">
+      <h2 style="margin-bottom:0">💉 ${PLAN.peds.title}</h2>
+      <div class="meal-kcal">${pedDone}/${PLAN.peds.items.length}</div>
+    </div>
+    <p class="mini-note">${PLAN.peds.subtitle}</p>
+    ${PLAN.peds.items.map((p, i) => {
+      const checked = !!pedChecks[i];
+      return `
+        <label class="check-item ${checked ? "checked" : ""}">
+          <input type="checkbox" data-kind="ped" data-index="${i}" ${checked ? "checked" : ""} />
+          <span class="item-text">${p.name}<span class="item-note">${p.dosage}</span></span>
+        </label>`;
+    }).join("")}
+    <p class="mini-note ped-disclaimer">⚠ Tracking only — not medical advice. Get baseline and follow-up bloodwork with a physician while running this.</p>
+  </div>`;
 
   $("supplementsContent").innerHTML = html;
 }
@@ -1230,7 +1269,7 @@ function downloadBlob(content, filename, type) {
 function exportCsv() {
   const logs = loadAllLogs();
   const dateKeys = Object.keys(logs).sort();
-  const header = ["Date", "Split Day", "Day Label", "Day Type", "Diet Type", "Body Weight (kg)", "Waist (in)", "Diet %", "Workout %", "Supplements %", "Overall %", "Cardio Done", "Exercises Completed", "Workout Missed", "Notes"];
+  const header = ["Date", "Split Day", "Day Label", "Day Type", "Meal Options (1-4)", "Body Weight (kg)", "Waist (in)", "Diet %", "Workout %", "Supplements %", "PEDs Taken", "Overall %", "Cardio Done", "Exercises Completed", "Workout Missed", "Notes"];
   const rows = [header];
 
   dateKeys.forEach((dk) => {
@@ -1244,12 +1283,13 @@ function exportCsv() {
       log.splitDay,
       entry.label,
       entry.type,
-      log.dietChecks.dietType,
+      log.dietChecks.mealOption ? [1, 2, 3, 4].map((n) => (log.dietChecks.mealOption["meal" + n] || 0) + 1).join(",") : "",
       log.bodyWeight || "",
       log.waist || "",
       pct(dTot),
       pct(wTot),
       pct(sTot),
+      log.pedChecks ? `${log.pedChecks.filter(Boolean).length}/${PLAN.peds.items.length}` : "",
       overall,
       log.workoutChecks.cardio ? "Yes" : "No",
       `${exTot.done}/${exTot.total}`,
@@ -1380,10 +1420,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMeasureCharts();
   });
 
-  // Diet type toggle (event delegation on diet content)
+  // Per-meal option toggle (event delegation on diet content)
   $("dietContent").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-diet-type]");
-    if (btn) changeDietType(todayKey(), btn.dataset.dietType);
+    const btn = e.target.closest("[data-meal-num]");
+    if (btn) changeMealOption(todayKey(), Number(btn.dataset.mealNum), Number(btn.dataset.optionIndex));
   });
 
   // Inline form-video expand/collapse, rest timer, and plate calculator (event delegation on workout content)
@@ -1439,6 +1479,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const idx = Number(t.dataset.index);
         const timing = t.dataset.timing;
         updateDayLog(dateKey, (log) => { log.supplementChecks[idx][timing] = t.checked; });
+      } else if (kind === "ped") {
+        const idx = Number(t.dataset.index);
+        updateDayLog(dateKey, (log) => {
+          if (!log.pedChecks) log.pedChecks = defaultPedChecks();
+          log.pedChecks[idx] = t.checked;
+        });
       }
       const scrollY = window.scrollY;
       renderAll();

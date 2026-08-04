@@ -1,6 +1,7 @@
 /* ==========================================================================
    Beyond Fitness Tracker — Plan Data
    Source: Train With The Viper coaching plan (Coach Tasdid Hasan)
+   Diet/Workout updated Aug 3, 2026. PED protocol added Aug 3, 2026.
    ========================================================================== */
 
 const PLAN = {
@@ -9,10 +10,13 @@ const PLAN = {
     title: "Certified Physique Transformation Coach · Contest Prep Coach · S.M.A.R.T Certified Trainer",
     email: "tasdid50@gmail.com",
     disclaimer:
-      "Please consult your physician before engaging in any dietary or workout regimen. Train With The Viper and its affiliates are not responsible for any pre-existing health condition or the result of a health condition due to the commencement of any dietary or workout regimen. This plan is confidential and made specifically for you — do not share it with anyone.",
+      "Please consult your physician before engaging in any dietary or workout regimen, and especially before using any performance-enhancing substances — a fitness coach is not a substitute for medical supervision (bloodwork, monitoring) on the PED protocol below. Train With The Viper and its affiliates are not responsible for any pre-existing health condition or the result of a health condition due to the commencement of any dietary, workout, or supplement/PED regimen. This plan is confidential and made specifically for you — do not share it with anyone.",
   },
 
   // ------------------------------------------------------------------ DIET
+  // Calories/macros are reasonable estimates for generic ingredients (USDA-style
+  // per-100g references), not brand-verified values — actual products vary.
+  // Good enough for a rough daily macro picture, not a lab report.
   diet: {
     morningDrink: {
       title: "Early Morning Drink",
@@ -24,69 +28,104 @@ const PLAN = {
         "1 probiotic tablet",
       ],
     },
-    note: "1 scoop whey = 8 egg whites (substitution note from coach)",
-    // Calories/macros are reasonable estimates for generic ingredients (USDA-style
-    // per-100g references), not brand-verified values — actual whey/EAA/carb powder
-    // products vary. Good enough for a rough daily macro picture, not a lab report.
+    note: "Each meal below has two interchangeable options — pick whichever you're eating that day.",
     meals: {
       1: {
         name: "Meal 1",
-        A: [
-          { text: "Whole egg x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
-          { text: "Oats 35g", kcal: 133, protein: 4.7, carbs: 23.5, fat: 2.3 },
-          { text: "Whey 1 scoop", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
-          { text: "Banana 1", kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
-        ],
-        B: [
-          { text: "Whole egg x3", kcal: 216, protein: 18.9, carbs: 1.2, fat: 14.4 },
-          { text: "Egg white x5", kcal: 85, protein: 18, carbs: 1.2, fat: 0 },
+        options: [
+          {
+            label: "Option 1",
+            items: [
+              { text: "Whole eggs x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
+              { text: "Whey 1 scoop", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
+              { text: "Oats 50g", kcal: 190, protein: 6.8, carbs: 33.5, fat: 3.3 },
+              { text: "Apple 1", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+              "Take AM Multivitamin + Omega 3 (tracked in Supplements tab)",
+            ],
+          },
+          {
+            label: "Option 2",
+            items: [
+              { text: "Whole eggs x3", kcal: 216, protein: 18.9, carbs: 1.2, fat: 14.4 },
+              { text: "White bread — 2 slices", kcal: 133, protein: 4.5, carbs: 24.5, fat: 1.6 },
+              { text: "Apple 1", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+            ],
+          },
         ],
       },
       2: {
         name: "Meal 2",
-        A: [
-          { text: "165g chicken breast / beef / fish (cooked weight)", kcal: 272, protein: 51.2, carbs: 0, fat: 5.9 },
-          { text: "120g cooked rice (cooked weight)", kcal: 156, protein: 3.2, carbs: 33.6, fat: 0.4 },
-          { text: "1 apple (red or green)", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
-          { text: "Whole egg x1", kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8 },
-          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
-        ],
-        B: [
-          { text: "160g chicken breast / beef / fish (cooked weight)", kcal: 264, protein: 49.6, carbs: 0, fat: 5.8 },
-          { text: "1 apple", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3 },
-          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
+        note: "No carrots / no capsicum / no tomato",
+        options: [
+          {
+            label: "Option 1",
+            items: [
+              { text: "150g chicken / fish (cooked weight)", kcal: 248, protein: 46.5, carbs: 0, fat: 5.4 },
+              { text: "130g cooked white rice", kcal: 169, protein: 3.5, carbs: 36.4, fat: 0.4 },
+              { text: "Cooked seasonal vegetables (deshi veg)", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
+            ],
+          },
+          {
+            label: "Option 2",
+            items: [
+              { text: "150g lean beef", kcal: 281, protein: 39, carbs: 0, fat: 12 },
+              { text: "200g potato, cooked", kcal: 174, protein: 4, carbs: 40, fat: 0.2 },
+              { text: "Cooked vegetables of choice", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
+            ],
+          },
         ],
       },
       3: {
         name: "Meal 3",
-        A: [
-          { text: "170g chicken breast (cooked weight)", kcal: 280, protein: 52.7, carbs: 0, fat: 6.1 },
-          { text: "Extra virgin olive oil — 1 tbsp", kcal: 124, protein: 0, carbs: 0, fat: 14 },
-          { text: "Green veg 70g", kcal: 24, protein: 2, carbs: 4.9, fat: 0.3 },
-          { text: "Protein shake (optional)", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
+        note: "No carrots / no capsicum / no tomato",
+        options: [
+          {
+            label: "Option 1",
+            items: [
+              { text: "Chicken sandwich — 150g chicken breast + 2 toast + mustard & herbs", kcal: 380, protein: 51, carbs: 24.5, fat: 7 },
+              { text: "Cucumber", kcal: 15, protein: 0.6, carbs: 3.6, fat: 0.1 },
+            ],
+          },
+          {
+            label: "Option 2",
+            items: [
+              { text: "150g chicken breast (cooked weight)", kcal: 248, protein: 46.5, carbs: 0, fat: 5.4 },
+              { text: "130g cooked white rice", kcal: 169, protein: 3.5, carbs: 36.4, fat: 0.4 },
+              { text: "2 cucumbers (salt + lemon)", kcal: 30, protein: 1.2, carbs: 7.2, fat: 0.2 },
+            ],
+          },
         ],
-        B: [
-          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
-          { text: "Veg 100g", kcal: 28, protein: 2, carbs: 5.6, fat: 0.2 },
-          { text: "1 tbsp olive oil on top", kcal: 124, protein: 0, carbs: 0, fat: 14 },
-          { text: "Protein shake (optional)", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
-        ],
-        note: "You can mash potato with olive oil (not counted in calories above)",
       },
       4: {
         name: "Meal 4",
         subtitle: "Last meal — anytime you want",
-        A: [
-          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
-          { text: "Olive oil — 5ml", kcal: 40, protein: 0, carbs: 0, fat: 4.5 },
-          { text: "Green salad 70-100g", kcal: 13, protein: 1, carbs: 2.5, fat: 0.2 },
-        ],
-        B: [
-          { text: "180g chicken / fish / beef", kcal: 297, protein: 55.8, carbs: 0, fat: 6.5 },
-          { text: "Whole egg x2", kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
-          { text: "1 tbsp olive oil on top", kcal: 124, protein: 0, carbs: 0, fat: 14 },
+        note: "No carrots / no capsicum / no tomato",
+        options: [
+          {
+            label: "Option 1",
+            items: [
+              { text: "160g chicken breast", kcal: 264, protein: 49.6, carbs: 0, fat: 5.8 },
+              { text: "Salad — lettuce, parsley, onion, cucumber", kcal: 20, protein: 1.5, carbs: 4, fat: 0.2 },
+              { text: "Salt + 1 tbsp vinegar + 1 tsp olive oil", kcal: 43, protein: 0, carbs: 0, fat: 4.5 },
+            ],
+          },
+          {
+            label: "Option 2",
+            items: [
+              { text: "1 can tuna", kcal: 162, protein: 36.4, carbs: 0, fat: 1.4 },
+              { text: "150g air-fried potatoes", kcal: 180, protein: 3, carbs: 39, fat: 0.3 },
+              { text: "Salad + salt + 1 tbsp vinegar + 1 tsp olive oil", kcal: 60, protein: 1.5, carbs: 4, fat: 4.7 },
+            ],
+          },
         ],
       },
+    },
+    comfortFood: {
+      title: "Comfort Food Allowance",
+      subtitle: "Through the day, to suppress appetite if you need to",
+      items: [
+        { text: "Dark chocolate (Lindt, 75% cocoa) — 2 squares", kcal: 119, protein: 1.6, carbs: 9.2, fat: 26.5 },
+      ],
     },
     training: {
       preWorkout: {
@@ -113,8 +152,8 @@ const PLAN = {
         title: "Post-Workout Shake",
         subtitle: "Training days only",
         items: [
-          { text: "1 scoop whey", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
-          { text: "Banana 60g", kcal: 52, protein: 0.65, carbs: 13.5, fat: 0.2 },
+          { text: "1 scoop whey isolate", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
+          { text: "120g seasonal fruits of choice", kcal: 66, protein: 0.7, carbs: 16.8, fat: 0.2 },
         ],
       },
     },
@@ -130,7 +169,7 @@ const PLAN = {
         "Sauces & dressings",
         "Ghee, butter, margarine",
         "Sugar & soft drinks (exception: 1 diet coke per day allowed)",
-        "Chocolates (exception: one small piece of dark chocolate if you crave it)",
+        "Chocolates (exception: comfort-food dark chocolate allowance above)",
         "Candy, oriental sweets, etc.",
       ],
     },
@@ -236,279 +275,173 @@ const PLAN = {
     },
   ],
 
+  // -------------------------------------------------------------------- PED
+  // Tracking only — not medical advice. See disclaimer above: get bloodwork
+  // and medical monitoring for anything in this section.
+  peds: {
+    title: "PED Protocol",
+    subtitle: "4-week cycle, starting Aug 3, 2026 — adherence tracking only",
+    items: [
+      { name: "Testosterone", dosage: "250mg, 2x per week" },
+      { name: "Primobolan", dosage: "100mg, 2x per week" },
+      { name: "Anavar (Oxandrolone)", dosage: "30mg — training days only, 4 weeks only" },
+    ],
+  },
+
   // ---------------------------------------------------------------- TRAINING
   split: [
-    { day: 1, label: "Torso A", type: "training", workout: "torsoA", cardio: "35 min cardio" },
-    { day: 2, label: "Limb A", type: "training", workout: "limbA", cardio: "35 min cardio" },
-    { day: 3, label: "Torso B", type: "training", workout: "torsoB", cardio: "35 min cardio" },
-    { day: 4, label: "Rest", type: "rest", workout: null, cardio: "45 min cardio + abs" },
-    { day: 5, label: "Limb B", type: "training", workout: "limbB", cardio: "50 min cardio" },
-    { day: 6, label: "Torso A", type: "training", workout: "torsoA", cardio: "50 min cardio" },
-    { day: 7, label: "Rest", type: "rest", workout: null, cardio: "45 min cardio" },
+    { day: 1, label: "Legs", type: "training", workout: "legs", cardio: "" },
+    { day: 2, label: "Chest & Tricep", type: "training", workout: "chestTricep", cardio: "" },
+    { day: 3, label: "Side Delt, Abs & Cardio", type: "training", workout: "sideDeltAbs", cardio: "Cardio included today" },
+    { day: 4, label: "Back & Bicep", type: "training", workout: "backBicep", cardio: "" },
+    { day: 5, label: "Shoulder & Tricep", type: "training", workout: "shoulderTricep", cardio: "" },
+    { day: 6, label: "Arms", type: "training", workout: "arms", cardio: "" },
+    { day: 7, label: "Rest", type: "rest", workout: null, cardio: "" },
   ],
 
   workouts: {
-    torsoA: {
-      name: "Torso A",
+    legs: {
+      name: "Legs",
+      exercises: [
+        { muscle: "Quad", order: "1", exercise: "Leg Extensions", sets: 4, reps: "12-15" },
+        {
+          muscle: "Quad", order: "2", exercise: "Hack Squat", sets: 4, reps: "15-12-10-8",
+          notes: "Last set: triple drop set, 8 reps each drop.",
+        },
+        {
+          muscle: "Quad", order: "3", exercise: "Leg Press", sets: 4, reps: "30 (15 wide stance + 15 close stance)",
+          notes: "Lighter weight for high reps.",
+        },
+        { muscle: "Adductor", order: "4", exercise: "Adductor Inner Thigh Machine", sets: 3, reps: "15-20" },
+        { muscle: "Hamstring", order: "5", exercise: "Leg Curls", sets: 3, reps: "12-15" },
+        {
+          muscle: "Hamstring", order: "6", exercise: "Seated Leg Curls", sets: 3, reps: "12-15",
+          notes: "Each rep: hold 3 sec in the controlled position.",
+        },
+        { muscle: "Calves", order: "7", exercise: "Standing Calf Raises", sets: 4, reps: "15-20" },
+      ],
+    },
+    chestTricep: {
+      name: "Chest & Tricep",
       exercises: [
         {
-          muscle: "Chest",
-          order: "A1",
-          exercise: "Pec Dec Fly",
-          sets: 3,
-          reps: "15-20",
-          notes: "Add 1 drop set at your last set (50% drop, hold squeeze position for 15 reps, then 15 reps).",
+          muscle: "Chest", order: "1", exercise: "Smith Machine Incline Chest Press", sets: 4, reps: "Warm-up 15, Working 8-10",
+          notes: "2 warm-up sets, 2 heavy working sets.",
         },
         {
-          muscle: "Chest",
-          order: "B1",
-          exercise: "Incline Smith Machine Press",
-          sets: 3,
-          reps: "8-10",
-          notes: "Go heavy with good form, 3-4 sec lowering, explosive up. Stop immediately if you feel pain. Last set: triple drop set, 6-8 reps each drop.",
+          muscle: "Chest", order: "2", exercise: "Incline Dumbbell Flies + Pec Dec Flies", sets: 3, reps: "15-12-10",
+          notes: "This is a superset.",
         },
         {
-          muscle: "Side Delt / Lat",
-          order: "C1",
-          exercise: "DB Lateral Raise",
-          sets: 5,
-          reps: "20-15-12-10-8",
-          notes: "Reverse drop set at the end — heavy to low.",
+          muscle: "Chest", order: "3", exercise: "Incline Dumbbell Press", sets: 3, reps: "12-10-8",
+          notes: "If you fail before reaching 8 reps, drop the weight and continue at a lower weight to complete the 8 reps from where you left off.",
         },
+        { muscle: "Chest", order: "4", exercise: "Cable Cross + Push Up", sets: 2, reps: "15-12" },
         {
-          muscle: "Lat",
-          order: "D1",
-          exercise: "Reverse Lat Pulldown",
-          sets: 3,
-          reps: "8-12",
-          notes: "Go heavy with good form, 3-4 sec eccentric.",
-          video: "https://www.youtube.com/watch?v=SNiwpA13ZLU",
+          muscle: "Tricep", order: "5", exercise: "Triceps Rope Pressdown", sets: 4, reps: "See video for rep guidance",
+          notes: "Watch the video (\"Tricep Growth Secrets\").",
         },
+        { muscle: "Tricep", order: "6", exercise: "Overhead Rope Extensions", sets: 3, reps: "10-12" },
         {
-          muscle: "Mid Back / Lat / Rear Delt",
-          order: "E1",
-          exercise: "Low Machine Row",
-          sets: 3,
-          reps: "6-10",
-          notes: "Go heavy as you can.",
-          video: "https://www.youtube.com/shorts/yFo-EFYzf1s",
-        },
-        {
-          muscle: "Mid Back / Lat / Rear Delt",
-          order: "F1",
-          exercise: "Single Arm Cable Row",
-          sets: 3,
-          reps: "12-20",
-          video: "https://www.youtube.com/watch?v=0pGi67ADMRg",
-        },
-        {
-          muscle: "Mid Back / Lat / Rear Delt",
-          order: "G1",
-          exercise: "Rear Pec Deck",
-          sets: 3,
-          reps: "8-12",
-          notes: "Add triple drop set, 10 reps each drop.",
+          muscle: "Tricep", order: "7", exercise: "1-Arm Reverse Pressdown", sets: 3, reps: "10-12",
+          video: "https://www.youtube.com/shorts/qmsLLmtk47A",
         },
       ],
     },
-    limbA: {
-      name: "Limb A",
+    sideDeltAbs: {
+      name: "Side Delt + Abs + Cardio",
       exercises: [
         {
-          muscle: "Tricep",
-          order: "A1",
-          exercise: "Straight Bar Pressdown",
-          sets: 3,
-          reps: "6-10",
-          notes: "Add triple drop set, 10 reps each drop.",
+          muscle: "Side Delt", order: "1", exercise: "Seated Dumbbell Side Raises", sets: 3, reps: "20-15-12",
+          notes: "After completing 12 reps, rest 1 minute, then perform a reverse drop set: 12, 15, then 20 reps.",
         },
         {
-          muscle: "Bicep",
-          order: "A2",
-          exercise: "DB Preacher Curl",
-          sets: 3,
-          reps: "8-12",
+          muscle: "Side Delt", order: "2", exercise: "Cable Side Raises", sets: 3, reps: "15-12-10",
+          notes: "Last set: triple drop set, 8 reps each drop.",
         },
         {
-          muscle: "Tricep",
-          order: "B1",
-          exercise: "Single Arm Overhead Extension",
-          sets: 3,
-          reps: "6-10",
-          notes: "Cable or DB.",
+          muscle: "Side Delt", order: "3", exercise: "1-Arm Dumbbell Side Raises", sets: 2, reps: "30 each arm",
+          notes: "Lighter weight for high reps.",
         },
+        { muscle: "Abs", order: "4", exercise: "Rope Crunches", sets: 3, reps: "20", notes: "Squeeze properly." },
+        { muscle: "Abs", order: "5", exercise: "Vertical Knee Raises", sets: 3, reps: "15", notes: "Bend your knees slightly." },
         {
-          muscle: "Bicep",
-          order: "B2",
-          exercise: "Machine Preacher Curl",
-          sets: 3,
-          reps: "8-12",
-          notes: "1 drop set at the end, to failure.",
-        },
-        {
-          muscle: "Hamstring",
-          order: "C1",
-          exercise: "Seated Ham Curl",
-          sets: 3,
-          reps: "8-12",
-        },
-        {
-          muscle: "Quad",
-          order: "D1",
-          exercise: "Leg Press",
-          sets: 3,
-          reps: "8-12",
-          notes: "Go heavy with good form, 3-4 sec eccentric. Last set: triple drop, 8 reps each drop.",
-        },
-        {
-          muscle: "Adductor",
-          order: "E1",
-          exercise: "Adductor Machine",
-          sets: 3,
-          reps: "10-15",
-        },
-        {
-          muscle: "Abs",
-          order: "F1",
-          exercise: "Rope Crunch",
-          sets: 3,
-          reps: "15",
+          muscle: "Abs", order: "6", exercise: "Plank", sets: 3, reps: "1 min",
+          notes: "Hold in a controlled position.",
         },
       ],
     },
-    torsoB: {
-      name: "Torso B",
+    backBicep: {
+      name: "Back & Bicep",
       exercises: [
         {
-          muscle: "Chest",
-          order: "A1",
-          exercise: "Machine Chest Press",
-          sets: 3,
-          reps: "8-12",
-          notes: "Go heavy with good form, 3-4 sec eccentric. Last set: triple drop, 8 reps each drop.",
+          muscle: "Back", order: "1", exercise: "Lat Pulldown", sets: 4, reps: "Warm-up 15, Working 10-12",
+          notes: "2 warm-up sets, 2 working sets.",
         },
         {
-          muscle: "Chest / Mid Back / Lat",
-          order: "B1",
-          exercise: "Cable Fly",
-          sets: 3,
-          reps: "10-15",
-          notes: "Align cables with mid line.",
-          video: "https://www.youtube.com/shorts/3oDD2JPrpaA",
+          muscle: "Back", order: "2", exercise: "Seated Cable Row", sets: 3, reps: "Pyramid 8-12",
+          notes: "Last set: triple drop set, 8 reps each drop.",
         },
         {
-          muscle: "Chest / Mid Back / Lat",
-          order: "C1",
-          exercise: "Chest-Supported T-Bar Row",
-          sets: 3,
-          reps: "8-12",
+          muscle: "Back", order: "3", exercise: "Chest-Supported Dumbbell Rows", sets: 3, reps: "15-10",
+          video: "https://www.youtube.com/watch?v=vO5wdWUUPek&list=PLWKDvn-ycDHEtaCQbgEkpasXEhnlH1EJT",
         },
         {
-          muscle: "Chest / Mid Back / Lat",
-          order: "D1",
-          exercise: "Reverse Pulldown (Back Machine)",
-          sets: 3,
-          reps: "8-12",
-          notes: "Focus on driving elbows straight down.",
-          video: "https://www.youtube.com/watch?v=SNiwpA13ZLU",
+          muscle: "Back", order: "4", exercise: "1-Arm Lat Pulldowns", sets: 3, reps: "20",
+          notes: "Full stretch, full squeeze.",
         },
+        { muscle: "Back", order: "5", exercise: "V-Grip Pulldowns", sets: 3, reps: "10-12" },
+        { muscle: "Back", order: "6", exercise: "Shrugs with Dumbbell", sets: 3, reps: "12-15" },
         {
-          muscle: "Side Delt / Rear Delt / Lower Back",
-          order: "E1",
-          exercise: "Cable Y-Raise",
-          sets: 4,
-          reps: "10-15",
-          video: "https://www.youtube.com/watch?v=R_n-b6XAUSU",
+          muscle: "Bicep", order: "7", exercise: "Cable EZ Curls", sets: 3, reps: "10-12",
+          notes: "Last set: triple drop set, 8 reps each drop.",
         },
+        { muscle: "Bicep", order: "8", exercise: "Seated Dumbbell Alternating Curls", sets: 3, reps: "10-12 per arm" },
         {
-          muscle: "Side Delt / Rear Delt / Lower Back",
-          order: "F1",
-          exercise: "Cable Face Pulls",
-          sets: 3,
-          reps: "10-15",
-        },
-        {
-          muscle: "Side Delt / Rear Delt / Lower Back",
-          order: "G1",
-          exercise: "Hyperextension",
-          sets: 3,
-          reps: "15",
-        },
-        {
-          muscle: "Abs",
-          order: "F1",
-          exercise: "Vertical Leg Raises",
-          sets: 3,
-          reps: "15",
+          muscle: "Bicep", order: "9", exercise: "ISO Hold Hammer Curl", sets: 3, reps: "—",
+          video: "https://www.youtube.com/watch?v=c8fEgTPIXAU&list=PLWKDvn-ycDHEtaCQbgEkpasXEhnlH1EJT&index=2",
         },
       ],
     },
-    limbB: {
-      name: "Limb B",
+    shoulderTricep: {
+      name: "Shoulder & Tricep",
+      exercises: [
+        { muscle: "Shoulder", order: "1", exercise: "Reverse Pec Dec Fly", sets: 4, reps: "15-15-12-10" },
+        {
+          muscle: "Shoulder", order: "2", exercise: "Machine Side Laterals (or DB Lateral Raises)", sets: 4, reps: "12-15, 15-12-10",
+          notes: "Increase weight each set.",
+        },
+        {
+          muscle: "Shoulder", order: "3", exercise: "Dumbbell Shoulder Press", sets: 3, reps: "15-12-10",
+          notes: "Last set: 2 drop sets — watch the video.",
+          video: "https://www.youtube.com/watch?v=22NUu_moSMo",
+        },
+        { muscle: "Shoulder", order: "4", exercise: "Front Shoulder Raises with Bar", sets: 3, reps: "12-15, 10-12" },
+        { muscle: "Tricep", order: "5", exercise: "Triceps Rope Extension", sets: 3, reps: "10-12" },
+        { muscle: "Tricep", order: "6", exercise: "Straight Bar Push Down", sets: 3, reps: "10-12" },
+        { muscle: "Tricep", order: "7", exercise: "Single Arm Overhead Dumbbell Extension", sets: 3, reps: "10-12 per arm" },
+      ],
+    },
+    arms: {
+      name: "Arms",
       exercises: [
         {
-          muscle: "Bicep",
-          order: "A1",
-          exercise: "Incline DB Curl",
-          sets: 3,
-          reps: "8-12",
-          notes: "Focus on the stretched position.",
+          muscle: "Bicep / Tricep", order: "1", exercise: "EZ Bar Cable Curl + Tricep Bar Pressdown", sets: 4, reps: "15-15-12-10",
+          notes: "Superset.",
         },
         {
-          muscle: "Tricep",
-          order: "A2",
-          exercise: "Cable Pushdown (Rope)",
-          sets: 3,
-          reps: "10-15",
-          notes: "Lock elbows by sides.",
+          muscle: "Bicep / Tricep", order: "2", exercise: "45° Incline Bench Hammer Curl + Skull Crusher", sets: 4, reps: "12-15",
+          notes: "Superset.",
         },
         {
-          muscle: "Bicep",
-          order: "B1",
-          exercise: "Cable Lat Pull Curl",
-          sets: 3,
-          reps: "8-12",
+          muscle: "Bicep / Tricep", order: "3", exercise: "Machine Preacher Curl + Machine Dips", sets: 3, reps: "12-15 / 10-12",
+          notes: "Superset.",
         },
         {
-          muscle: "Tricep",
-          order: "B2",
-          exercise: "JM Press or Dip Machine",
-          sets: 3,
-          reps: "6-10",
-          notes: "Heavy load.",
+          muscle: "Bicep / Tricep", order: "4", exercise: "Single Arm Overhead Dumbbell Extension + Concentration Curl", sets: 3, reps: "10-12 per arm",
+          notes: "Superset.",
         },
-        {
-          muscle: "Hamstring / Quad / Calves / Abs",
-          order: "C1",
-          exercise: "Stiff Leg Deadlift",
-          sets: 3,
-          reps: "8-10",
-          notes: "Barbell, DB, or Smith machine.",
-          video: "https://www.youtube.com/shorts/q3mVYFBaLq4",
-        },
-        {
-          muscle: "Hamstring / Quad / Calves / Abs",
-          order: "D1",
-          exercise: "Squats",
-          sets: 3,
-          reps: "12-10-8",
-          notes: "Wide stance.",
-        },
-        {
-          muscle: "Hamstring / Quad / Calves / Abs",
-          order: "E1",
-          exercise: "Standing Calf Raise",
-          sets: 4,
-          reps: "10-15",
-          notes: "Pause at the bottom stretch.",
-        },
-        {
-          muscle: "Hamstring / Quad / Calves / Abs",
-          order: "F1",
-          exercise: "Rope Crunch",
-          sets: 3,
-          reps: "15",
-        },
+        { muscle: "Forearm", order: "5", exercise: "Cable Wrist Curl", sets: 3, reps: "20" },
       ],
     },
   },
