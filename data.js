@@ -1,7 +1,9 @@
 /* ==========================================================================
    Beyond Fitness Tracker — Plan Data
    Source: Train With The Viper coaching plan (Coach Tasdid Hasan)
-   Diet/Workout updated Aug 3, 2026. PED protocol added Aug 3, 2026.
+   Diet updated Aug 16, 2026 (post-workout shake, pre-workout EAA dose,
+   morning drink, and Omega 3 / Multivitamin dosing). Workout split
+   unchanged. PED protocol (added Aug 3, 2026) untouched.
    ========================================================================== */
 
 const PLAN = {
@@ -26,6 +28,7 @@ const PLAN = {
         "2 tbsp organic apple cider vinegar",
         "10g glutamine",
         "1 probiotic tablet",
+        "Isabgol (psyllium husk) — 2 teaspoons",
       ],
     },
     note: "Each meal below has two interchangeable options — pick whichever you're eating that day.",
@@ -132,7 +135,7 @@ const PLAN = {
         title: "Pre-Workout",
         subtitle: "45 minutes before workout — training days only",
         items: [
-          { text: "1 scoop EAA", kcal: 15, protein: 3, carbs: 0, fat: 0 },
+          { text: "1/2 scoop EAA", kcal: 8, protein: 1.5, carbs: 0, fat: 0 },
           { text: "15g carb powder (or 40g dates)", kcal: 57, protein: 0, carbs: 15, fat: 0 },
           { text: "Salt 2g", kcal: 0, protein: 0, carbs: 0, fat: 0 },
           { text: "3g L-citrulline", kcal: 0, protein: 0, carbs: 0, fat: 0 },
@@ -153,7 +156,8 @@ const PLAN = {
         subtitle: "Training days only",
         items: [
           { text: "1 scoop whey isolate", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
-          { text: "120g seasonal fruits of choice", kcal: 66, protein: 0.7, carbs: 16.8, fat: 0.2 },
+          { text: "45g oats", kcal: 171, protein: 6.1, carbs: 30.2, fat: 3 },
+          { text: "2 tbsp honey", kcal: 128, protein: 0, carbs: 34.6, fat: 0 },
         ],
       },
     },
@@ -194,13 +198,13 @@ const PLAN = {
     {
       name: "Multivitamin",
       dosage: "1 tab",
-      timing: ["AM"],
+      timing: ["AM", "PM"],
       brand: "Any brand of your choice and budget",
     },
     {
       name: "Omega 3",
-      dosage: "1 tab",
-      timing: ["PM"],
+      dosage: "2 tabs with breakfast, 1 tab with dinner",
+      timing: ["AM", "PM"],
       brand: "Any brand of your choice and budget",
     },
     {
