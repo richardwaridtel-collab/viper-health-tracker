@@ -294,13 +294,13 @@ const PLAN = {
 
   // ---------------------------------------------------------------- TRAINING
   split: [
-    { day: 1, label: "Legs", type: "training", workout: "legs", cardio: "" },
-    { day: 2, label: "Chest & Tricep", type: "training", workout: "chestTricep", cardio: "" },
-    { day: 3, label: "Side Delt, Abs & Cardio", type: "training", workout: "sideDeltAbs", cardio: "Cardio included today" },
-    { day: 4, label: "Back & Bicep", type: "training", workout: "backBicep", cardio: "" },
-    { day: 5, label: "Shoulder & Tricep", type: "training", workout: "shoulderTricep", cardio: "" },
-    { day: 6, label: "Arms", type: "training", workout: "arms", cardio: "" },
-    { day: 7, label: "Rest", type: "rest", workout: null, cardio: "" },
+    { day: 1, label: "Legs", type: "training", workout: "legs", cardio: "30 min low-intensity treadmill walk" },
+    { day: 2, label: "Chest & Tricep", type: "training", workout: "chestTricep", cardio: "30 min low-intensity treadmill walk" },
+    { day: 3, label: "Side Delt, Abs & Cardio", type: "training", workout: "sideDeltAbs", cardio: "30 min low-intensity treadmill walk" },
+    { day: 4, label: "Back & Bicep", type: "training", workout: "backBicep", cardio: "30 min low-intensity treadmill walk" },
+    { day: 5, label: "Shoulder & Tricep", type: "training", workout: "shoulderTricep", cardio: "30 min low-intensity treadmill walk" },
+    { day: 6, label: "Arms", type: "training", workout: "arms", cardio: "30 min low-intensity treadmill walk" },
+    { day: 7, label: "Rest", type: "rest", workout: null, cardio: "30 min low-intensity treadmill walk" },
   ],
 
   workouts: {
