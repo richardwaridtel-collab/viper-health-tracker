@@ -153,7 +153,8 @@ const PLAN = {
         subtitle: "Training days only",
         items: [
           { text: "1 scoop whey isolate", kcal: 120, protein: 24, carbs: 3, fat: 1.5, wheyScoop: true },
-          { text: "120g seasonal fruits of choice", kcal: 66, protein: 0.7, carbs: 16.8, fat: 0.2 },
+          { text: "Oats 45g", kcal: 171, protein: 6.1, carbs: 30.2, fat: 2.9 },
+          { text: "Honey — 2 tbsp", kcal: 128, protein: 0, carbs: 34.4, fat: 0 },
         ],
       },
     },
@@ -290,12 +291,12 @@ const PLAN = {
 
   // ---------------------------------------------------------------- TRAINING
   split: [
-    { day: 1, label: "Legs", type: "training", workout: "legs", cardio: "" },
-    { day: 2, label: "Chest & Tricep", type: "training", workout: "chestTricep", cardio: "" },
-    { day: 3, label: "Side Delt, Abs & Cardio", type: "training", workout: "sideDeltAbs", cardio: "Cardio included today" },
-    { day: 4, label: "Back & Bicep", type: "training", workout: "backBicep", cardio: "" },
-    { day: 5, label: "Shoulder & Tricep", type: "training", workout: "shoulderTricep", cardio: "" },
-    { day: 6, label: "Arms", type: "training", workout: "arms", cardio: "" },
+    { day: 1, label: "Legs", type: "training", workout: "legs", cardio: "Daily cardio" },
+    { day: 2, label: "Chest & Tricep", type: "training", workout: "chestTricep", cardio: "Daily cardio" },
+    { day: 3, label: "Side Delt, Abs & Cardio", type: "training", workout: "sideDeltAbs", cardio: "Daily cardio" },
+    { day: 4, label: "Back & Bicep", type: "training", workout: "backBicep", cardio: "Daily cardio" },
+    { day: 5, label: "Shoulder & Tricep", type: "training", workout: "shoulderTricep", cardio: "Daily cardio" },
+    { day: 6, label: "Arms", type: "training", workout: "arms", cardio: "Daily cardio" },
     { day: 7, label: "Rest", type: "rest", workout: null, cardio: "" },
   ],
 
